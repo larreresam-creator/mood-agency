@@ -1,0 +1,816 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mood Agency — CRM</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Space+Mono&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+<style>
+:root{--bg:#0a0a0a;--bg2:#111;--bg3:#1a1a1a;--bg4:#222;--pink:#ff3fa4;--pinks:rgba(255,63,164,0.12);--violet:#9b59f5;--violets:rgba(155,89,245,0.12);--white:#f5f0ff;--muted:#666;--border:rgba(255,255,255,0.06);--border2:rgba(255,255,255,0.13);--r:10px;--rl:14px;
+--t0:#ff3fa4;--t0s:rgba(255,63,164,0.13);
+--t1:#9b59f5;--t1s:rgba(155,89,245,0.13);
+--t2:#3dd6f5;--t2s:rgba(61,214,245,0.13);
+--t3:#f5a623;--t3s:rgba(245,166,35,0.13);
+--t4:#3ddc84;--t4s:rgba(61,220,132,0.13);
+--t5:#f55a3d;--t5s:rgba(245,90,61,0.13);
+}
+*{box-sizing:border-box;margin:0;padding:0;}html,body{height:100%;}
+body{background:var(--bg);color:var(--white);font-family:'Space Grotesk',sans-serif;font-size:14px;}
+.app{display:flex;height:100vh;overflow:hidden;}
+.sidebar{width:215px;flex-shrink:0;background:var(--bg2);border-right:1px solid var(--border);display:flex;flex-direction:column;}
+.content{flex:1;overflow-y:auto;display:flex;flex-direction:column;}
+.logo-area{padding:24px 20px 20px;border-bottom:1px solid var(--border);}
+.logo{font-size:22px;font-weight:700;letter-spacing:-1px;}
+.logo span{color:var(--pink);}
+.logo-tag{font-size:10px;color:var(--muted);margin-top:3px;font-family:'Space Mono',monospace;text-transform:uppercase;letter-spacing:.1em;}
+.nav{padding:16px 10px;flex:1;}
+.nav-btn{width:100%;display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:8px;border:none;background:none;color:var(--muted);cursor:pointer;font-family:'Space Grotesk',sans-serif;font-size:13px;font-weight:500;text-align:left;transition:all .15s;margin-bottom:2px;}
+.nav-btn:hover{background:var(--bg3);color:var(--white);}
+.nav-btn.active{background:var(--pinks);color:var(--pink);}
+.nav-btn svg{width:16px;height:16px;flex-shrink:0;}
+.sidebar-bottom{padding:16px;border-top:1px solid var(--border);}
+.dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--pink);margin-right:6px;box-shadow:0 0 6px var(--pink);}
+.status-txt{font-size:11px;color:var(--muted);font-family:'Space Mono',monospace;}
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:18px 28px;border-bottom:1px solid var(--border);background:var(--bg);position:sticky;top:0;z-index:20;flex-shrink:0;}
+.page-title{font-size:20px;font-weight:700;letter-spacing:-.5px;}
+.topbar-actions{display:flex;gap:8px;align-items:center;}
+.btn{display:inline-flex;align-items:center;gap:7px;padding:0 16px;height:36px;border-radius:8px;border:1px solid var(--border2);background:var(--bg3);color:var(--white);font-family:'Space Grotesk',sans-serif;font-size:13px;font-weight:500;cursor:pointer;transition:all .15s;white-space:nowrap;}
+.btn:hover{background:var(--bg4);border-color:rgba(255,255,255,.22);}
+.btn-pink{background:var(--pink);border-color:var(--pink);color:#fff;}
+.btn-pink:hover{background:#ff5cb4;border-color:#ff5cb4;}
+.btn-violet{background:var(--violets);border-color:rgba(155,89,245,.3);color:var(--violet);}
+.btn-violet:hover{background:rgba(155,89,245,.22);}
+.btn-sm{height:30px;padding:0 12px;font-size:12px;}
+.btn-icon{display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;padding:0;border:1px solid var(--border);border-radius:7px;font-size:15px;background:var(--bg3);color:var(--muted);cursor:pointer;transition:all .15s;}
+.btn-icon:hover{background:var(--bg4);color:var(--white);border-color:var(--border2);}
+.btn-del{display:inline-flex;align-items:center;justify-content:center;gap:5px;height:32px;padding:0 10px;border:1px solid rgba(255,80,80,.25);border-radius:7px;font-size:12px;font-family:'Space Grotesk',sans-serif;font-weight:500;background:rgba(255,80,80,.07);color:#ff6060;cursor:pointer;transition:all .15s;white-space:nowrap;}
+.btn-del:hover{background:rgba(255,80,80,.18);border-color:rgba(255,80,80,.5);color:#ff4040;}
+.page-body{padding:24px 28px;flex:1;}
+.page{display:none;flex-direction:column;height:100%;}
+.page.active{display:flex;}
+.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:22px;}
+.stat{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:16px 18px;}
+.stat-label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;font-family:'Space Mono',monospace;margin-bottom:8px;}
+.stat-num{font-size:30px;font-weight:700;letter-spacing:-1px;}
+.stat-num.pink{color:var(--pink);}
+.stat-num.violet{color:var(--violet);}
+.toolbar{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;}
+.search-box{position:relative;flex:1;min-width:160px;}
+.search-box svg{position:absolute;left:11px;top:50%;transform:translateY(-50%);color:var(--muted);pointer-events:none;width:14px;height:14px;}
+.search-box input{width:100%;padding:0 12px 0 36px;height:36px;}
+input[type=text],input[type=date],input[type=number],select,textarea{background:var(--bg2);border:1px solid var(--border);color:var(--white);font-family:'Space Grotesk',sans-serif;font-size:13px;border-radius:8px;outline:none;transition:border-color .15s;}
+input[type=text]:focus,input[type=date]:focus,input[type=number]:focus,select:focus,textarea:focus{border-color:rgba(155,89,245,.5);}
+select{padding:0 12px;height:36px;cursor:pointer;}
+select option{background:#1a1a1a;}
+.tbl-wrap{background:var(--bg2);border:1px solid var(--border);border-radius:var(--rl);overflow:hidden;}
+table{width:100%;border-collapse:collapse;}
+thead th{background:var(--bg3);padding:10px 12px;text-align:left;font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;border-bottom:1px solid var(--border);cursor:pointer;white-space:nowrap;user-select:none;font-family:'Space Mono',monospace;}
+thead th:hover{color:var(--white);}
+tbody td{padding:10px 12px;border-bottom:1px solid var(--border);font-size:13px;vertical-align:middle;}
+tbody tr:last-child td{border-bottom:none;}
+tbody tr:hover td{background:rgba(255,255,255,.02);}
+.td-name{font-weight:600;}
+.td-m{color:var(--muted);}
+.td-ell{max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.actions-cell{display:flex;gap:5px;align-items:center;}
+.badge{display:inline-flex;align-items:center;padding:3px 9px;border-radius:99px;font-size:11px;font-weight:600;font-family:'Space Mono',monospace;}
+.s-new{background:rgba(96,180,255,.1);color:#60b4ff;border:1px solid rgba(96,180,255,.25);}
+.s-contact{background:rgba(255,200,60,.1);color:#ffc83c;border:1px solid rgba(255,200,60,.25);}
+.s-rep{background:rgba(60,220,120,.1);color:#3cdc78;border:1px solid rgba(60,220,120,.25);}
+.s-nego{background:var(--violets);color:var(--violet);border:1px solid rgba(155,89,245,.25);}
+.s-ok{background:var(--pinks);color:var(--pink);border:1px solid rgba(255,63,164,.25);}
+.s-dead{background:rgba(255,255,255,.04);color:var(--muted);border:1px solid var(--border);}
+.t-marque{background:var(--pinks);color:var(--pink);border:1px solid rgba(255,63,164,.25);}
+.t-createur{background:rgba(96,180,255,.1);color:#60b4ff;border:1px solid rgba(96,180,255,.25);}
+.t-partenaire{background:var(--violets);color:var(--violet);border:1px solid rgba(155,89,245,.25);}
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.78);z-index:999;align-items:center;justify-content:center;}
+.overlay.open{display:flex;}
+.modal{background:var(--bg2);border:1px solid var(--border2);border-radius:var(--rl);padding:28px;width:440px;max-width:96vw;max-height:92vh;overflow-y:auto;}
+.modal-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:22px;}
+.modal-head h3{font-size:18px;font-weight:700;letter-spacing:-.3px;}
+.close-btn{background:none;border:1px solid var(--border);color:var(--muted);width:30px;height:30px;border-radius:6px;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;transition:all .15s;}
+.close-btn:hover{color:var(--white);border-color:var(--border2);}
+.field{margin-bottom:14px;}
+.field label{display:block;font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:6px;font-family:'Space Mono',monospace;}
+.field input[type=text],.field input[type=date],.field input[type=number],.field select,.field textarea{width:100%;padding:10px 12px;}
+.field textarea{resize:vertical;min-height:70px;line-height:1.6;}
+.field-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.modal-footer{display:flex;gap:8px;justify-content:flex-end;margin-top:22px;padding-top:18px;border-top:1px solid var(--border);}
+/* TALENT CARDS */
+.talent-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:14px;}
+.t-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--rl);padding:20px;transition:border-color .2s,transform .15s;}
+.t-card:hover{transform:translateY(-1px);}
+.t-ava{width:48px;height:48px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:18px;margin-bottom:14px;}
+.t-card h4{font-size:16px;font-weight:700;margin-bottom:4px;letter-spacing:-.3px;}
+.t-meta{font-size:12px;color:var(--muted);margin-bottom:10px;font-family:'Space Mono',monospace;}
+.t-plats{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:12px;}
+.plat-tag{padding:2px 8px;border-radius:5px;font-size:11px;background:var(--bg3);border:1px solid var(--border);color:var(--muted);font-family:'Space Mono',monospace;}
+.t-notes{font-size:12px;color:var(--muted);line-height:1.5;padding-top:12px;border-top:1px solid var(--border);}
+.t-footer{display:flex;gap:6px;margin-top:14px;}
+/* VEILLE */
+.veille-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px;}
+.v-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--rl);padding:18px;transition:border-color .2s;}
+.v-card:hover{border-color:var(--border2);}
+.v-tbadge{display:inline-block;padding:3px 9px;border-radius:99px;font-size:10px;font-weight:600;font-family:'Space Mono',monospace;margin-bottom:10px;}
+.v-card h4{font-size:15px;font-weight:700;margin-bottom:3px;}
+.v-handle{font-size:12px;color:var(--muted);font-family:'Space Mono',monospace;margin-bottom:12px;}
+.eng-row{display:flex;align-items:center;gap:8px;margin-bottom:8px;}
+.eng-lbl{font-size:11px;color:var(--muted);min-width:58px;font-family:'Space Mono',monospace;}
+.eng-track{flex:1;height:3px;background:var(--border);border-radius:2px;overflow:hidden;}
+.eng-fill{height:3px;border-radius:2px;background:linear-gradient(90deg,var(--violet),var(--pink));}
+.v-info{font-size:12px;color:var(--muted);margin-top:5px;}
+.v-footer{display:flex;gap:6px;margin-top:12px;}
+/* PIPELINE */
+.pipeline-wrap{display:flex;gap:12px;overflow-x:auto;padding-bottom:12px;}
+.pipe-col{min-width:200px;width:200px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--rl);padding:14px;flex-shrink:0;}
+.pipe-col-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+.pipe-col-name{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);font-family:'Space Mono',monospace;}
+.pipe-count{background:var(--bg3);border:1px solid var(--border);border-radius:99px;padding:1px 8px;font-size:11px;color:var(--muted);font-family:'Space Mono',monospace;}
+.pipe-card{background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:10px 12px;margin-bottom:8px;cursor:pointer;transition:border-color .15s;}
+.pipe-card:hover{border-color:var(--border2);}
+.pipe-card-name{font-size:13px;font-weight:600;margin-bottom:5px;}
+.pipe-card-pq{font-size:11px;margin-top:4px;font-weight:600;}
+.pipe-card-action{font-size:11px;color:var(--muted);margin-top:4px;}
+/* ANALYTICS */
+.analytics-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px;}
+.a-stat{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:16px 18px;}
+.a-stat-label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;font-family:'Space Mono',monospace;margin-bottom:6px;}
+.a-stat-num{font-size:28px;font-weight:700;letter-spacing:-1px;}
+.a-stat-sub{font-size:11px;color:var(--muted);margin-top:4px;font-family:'Space Mono',monospace;}
+.chart-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--rl);padding:20px;margin-bottom:20px;}
+.chart-card-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;}
+.chart-card-title{font-size:15px;font-weight:600;}
+.chart-card-sub{font-size:12px;color:var(--muted);}
+.chart-wrap{position:relative;}
+.analytics-row{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px;}
+.obj-row{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border);}
+.obj-row:last-child{border-bottom:none;}
+.obj-label{font-size:13px;}
+.obj-val{font-size:13px;font-weight:600;}
+.obj-bar-wrap{flex:1;margin:0 14px;height:4px;background:var(--border);border-radius:2px;overflow:hidden;}
+.obj-bar{height:4px;border-radius:2px;background:linear-gradient(90deg,var(--violet),var(--pink));}
+.breakdown-item{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);}
+.breakdown-item:last-child{border-bottom:none;}
+.breakdown-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;}
+.breakdown-name{flex:1;font-size:13px;}
+.breakdown-count{font-size:13px;font-weight:600;}
+.breakdown-pct{font-size:11px;color:var(--muted);font-family:'Space Mono',monospace;min-width:36px;text-align:right;}
+.period-toggle{display:flex;gap:4px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:3px;}
+.pt-btn{height:26px;padding:0 10px;border-radius:5px;border:none;background:none;color:var(--muted);font-family:'Space Grotesk',sans-serif;font-size:12px;font-weight:500;cursor:pointer;transition:all .15s;}
+.pt-btn.active{background:var(--bg4);color:var(--white);}
+.empty-state{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px 20px;color:var(--muted);text-align:center;gap:12px;}
+.view-toggle{display:flex;gap:4px;background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:3px;}
+.vt-btn{height:28px;padding:0 12px;border-radius:6px;border:none;background:none;color:var(--muted);font-family:'Space Grotesk',sans-serif;font-size:12px;font-weight:500;cursor:pointer;transition:all .15s;}
+.vt-btn.active{background:var(--bg4);color:var(--white);}
+.toast{position:fixed;bottom:24px;right:24px;background:var(--bg3);border:1px solid rgba(155,89,245,.4);border-radius:8px;padding:12px 18px;font-size:13px;color:var(--violet);z-index:9999;display:none;font-weight:500;}
+::-webkit-scrollbar{width:5px;height:5px;}::-webkit-scrollbar-track{background:transparent;}::-webkit-scrollbar-thumb{background:var(--bg4);border-radius:3px;}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <div class="logo-area">
+      <div class="logo">mood<span>.</span></div>
+      <div class="logo-tag">Agency CRM</div>
+    </div>
+    <nav class="nav">
+      <button class="nav-btn active" onclick="showPage('crm',this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+        CRM Prospects
+      </button>
+      <button class="nav-btn" onclick="showPage('talents',this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="7" r="4"/><path d="M3 21v-2a4 4 0 014-4h4a4 4 0 014 4v2"/><path d="M16 3.13a4 4 0 010 7.75M21 21v-2a4 4 0 00-3-3.87"/></svg>
+        Talents
+      </button>
+      <button class="nav-btn" onclick="showPage('veille',this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+        Veille
+      </button>
+      <button class="nav-btn" onclick="showPage('analytics',this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+        Analytics
+      </button>
+    </nav>
+    <div class="sidebar-bottom">
+      <span class="dot"></span><span class="status-txt">Auto-save ON</span>
+    </div>
+  </aside>
+
+  <div class="content">
+    <!-- CRM -->
+    <div id="page-crm" class="page active">
+      <div class="topbar">
+        <div class="page-title">CRM Prospects</div>
+        <div class="topbar-actions">
+          <div class="view-toggle">
+            <button class="vt-btn active" id="vt-table" onclick="setView('table')">Table</button>
+            <button class="vt-btn" id="vt-pipeline" onclick="setView('pipeline')">Pipeline</button>
+          </div>
+          <button class="btn btn-pink" onclick="openModal('crm',null)">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
+            Ajouter
+          </button>
+        </div>
+      </div>
+      <div class="page-body">
+        <div class="stats-grid" id="crm-stats"></div>
+        <div class="toolbar">
+          <div class="search-box">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+            <input type="text" id="s-search" placeholder="Rechercher..." oninput="renderCRM()">
+          </div>
+          <select id="s-type" onchange="renderCRM()">
+            <option value="">Tous types</option>
+            <option value="marque">Marque</option>
+            <option value="createur">Créateur</option>
+            <option value="partenaire">Partenaire</option>
+          </select>
+          <select id="s-statut" onchange="renderCRM()">
+            <option value="">Tous statuts</option>
+            <option value="new">À contacter</option>
+            <option value="contact">Contacté</option>
+            <option value="rep">Réponse</option>
+            <option value="nego">Négociation</option>
+            <option value="ok">Signé</option>
+            <option value="dead">Perdu</option>
+          </select>
+          <select id="s-pq" onchange="renderCRM()">
+            <option value="">Tous les talents</option>
+          </select>
+        </div>
+        <div id="view-table">
+          <div class="tbl-wrap">
+            <table>
+              <colgroup><col style="width:14%"><col style="width:9%"><col style="width:8%"><col style="width:10%"><col style="width:10%"><col style="width:9%"><col style="width:14%"><col style="width:15%"><col style="width:11%"></colgroup>
+              <thead><tr>
+                <th onclick="sortBy('nom')">Nom ↕</th>
+                <th onclick="sortBy('type')">Type ↕</th>
+                <th>Canal</th>
+                <th onclick="sortBy('statut')">Statut ↕</th>
+                <th onclick="sortBy('pourQui')">Pour qui ↕</th>
+                <th onclick="sortBy('date')">Contact ↕</th>
+                <th>Prochaine action</th>
+                <th>Notes</th>
+                <th></th>
+              </tr></thead>
+              <tbody id="crm-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+        <div id="view-pipeline" style="display:none">
+          <div class="pipeline-wrap" id="pipeline"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TALENTS -->
+    <div id="page-talents" class="page">
+      <div class="topbar">
+        <div class="page-title">Talents</div>
+        <div class="topbar-actions">
+          <button class="btn btn-pink" onclick="openModal('talent',null)">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
+            Ajouter talent
+          </button>
+        </div>
+      </div>
+      <div class="page-body">
+        <div class="talent-grid" id="talent-grid"></div>
+      </div>
+    </div>
+
+    <!-- VEILLE -->
+    <div id="page-veille" class="page">
+      <div class="topbar">
+        <div class="page-title">Veille concurrentielle</div>
+        <div class="topbar-actions">
+          <select id="v-filter" onchange="renderVeille()" style="height:36px"><option value="">Tous les talents</option></select>
+          <button class="btn btn-pink" onclick="openModal('veille',null)">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
+            Ajouter créateur
+          </button>
+        </div>
+      </div>
+      <div class="page-body">
+        <div class="veille-grid" id="veille-grid"></div>
+      </div>
+    </div>
+
+    <!-- ANALYTICS -->
+    <div id="page-analytics" class="page">
+      <div class="topbar">
+        <div class="page-title">Analytics</div>
+        <div class="topbar-actions">
+          <div class="period-toggle">
+            <button class="pt-btn active" id="pt-7" onclick="setPeriod(7,this)">7 jours</button>
+            <button class="pt-btn" id="pt-14" onclick="setPeriod(14,this)">14 jours</button>
+            <button class="pt-btn" id="pt-30" onclick="setPeriod(30,this)">30 jours</button>
+          </div>
+          <button class="btn btn-pink" onclick="openModal('contact',null)">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
+            Loguer contact
+          </button>
+        </div>
+      </div>
+      <div class="page-body">
+        <div class="analytics-grid" id="a-stats"></div>
+        <div class="chart-card">
+          <div class="chart-card-head">
+            <div>
+              <div class="chart-card-title">Contacts par jour</div>
+              <div class="chart-card-sub" id="chart-sub">Avec ligne de moyenne et objectif</div>
+            </div>
+            <div style="display:flex;align-items:center;gap:16px;font-size:12px;color:var(--muted)">
+              <span style="display:flex;align-items:center;gap:5px"><span style="display:inline-block;width:20px;height:2px;background:var(--pink)"></span>Contacts</span>
+              <span style="display:flex;align-items:center;gap:5px"><span style="display:inline-block;width:20px;height:2px;background:var(--violet);border-top:2px dashed var(--violet)"></span>Moyenne</span>
+              <span style="display:flex;align-items:center;gap:5px"><span style="display:inline-block;width:20px;height:2px;background:#ffc83c;border-top:2px dotted #ffc83c"></span>Objectif</span>
+            </div>
+          </div>
+          <div class="chart-wrap"><canvas id="daily-chart" height="260"></canvas></div>
+        </div>
+        <div class="analytics-row">
+          <div class="chart-card" style="margin-bottom:0">
+            <div class="chart-card-head"><div class="chart-card-title">Répartition par statut</div></div>
+            <div id="statut-breakdown"></div>
+          </div>
+          <div class="chart-card" style="margin-bottom:0">
+            <div class="chart-card-head"><div class="chart-card-title">Contacts par talent</div></div>
+            <div id="talent-breakdown"></div>
+          </div>
+        </div>
+        <div class="chart-card" style="margin-top:16px">
+          <div class="chart-card-head">
+            <div class="chart-card-title">Objectifs du mois</div>
+            <div style="font-size:12px;color:var(--muted)" id="obj-month"></div>
+          </div>
+          <div id="objectives"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL -->
+<div class="overlay" id="overlay">
+  <div class="modal">
+    <div class="modal-head">
+      <h3 id="modal-title"></h3>
+      <button class="close-btn" onclick="closeModal()">✕</button>
+    </div>
+    <div id="modal-body"></div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal()">Annuler</button>
+      <button class="btn btn-pink" onclick="saveModal()">Enregistrer</button>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast">✓ Sauvegardé</div>
+
+<script>
+// ── FIREBASE ──────────────────────────────────────────
+const firebaseConfig = {
+  apiKey: "AIzaSyDtG-Jbr3iCCXbUaYLHD7kBh2f6jicl8GY",
+  authDomain: "mood-agency.firebaseapp.com",
+  projectId: "mood-agency",
+  storageBucket: "mood-agency.firebasestorage.app",
+  messagingSenderId: "85711380289",
+  appId: "1:85711380289:web:533d4022aab09c28a34bc0"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+
+// ── CONFIG ────────────────────────────────────────────
+const STATUTS={new:'À contacter',contact:'Contacté',rep:'Réponse',nego:'Négociation',ok:'Signé',dead:'Perdu'};
+const TYPES={marque:'Marque',createur:'Créateur',partenaire:'Partenaire'};
+const STAT_ORDER=['new','contact','rep','nego','ok','dead'];
+const CANAUX=['Email','Instagram DM','LinkedIn','TikTok DM','Appel','Autre'];
+
+// Couleurs distinctes par talent (index)
+const TALENT_COLORS=['#ff3fa4','#9b59f5','#3dd6f5','#f5a623','#3ddc84','#f55a3d','#f5e623','#d63df5'];
+const TALENT_COLORS_SOFT=[
+  'rgba(255,63,164,0.13)','rgba(155,89,245,0.13)','rgba(61,214,245,0.13)',
+  'rgba(245,166,35,0.13)','rgba(61,220,132,0.13)','rgba(245,90,61,0.13)',
+  'rgba(245,230,35,0.13)','rgba(214,61,245,0.13)'
+];
+
+let crm=[],talents=[],veille=[],contacts=[];
+let sortKey=null,sortAsc=true,modalMode=null,editId=null,currentView='table',currentPeriod=7;
+let dailyChart=null;
+
+// ── STORAGE (Firebase) ────────────────────────────────
+async function load(){
+  try{
+    const [c,t,v,co]=await Promise.all([
+      db.collection('data').doc('crm').get(),
+      db.collection('data').doc('talents').get(),
+      db.collection('data').doc('veille').get(),
+      db.collection('data').doc('contacts').get()
+    ]);
+    crm=c.exists?c.data().items:dCRM();
+    talents=t.exists?t.data().items:dTalents();
+    veille=v.exists?v.data().items:dVeille();
+    contacts=co.exists?co.data().items:dContacts();
+  }catch(err){
+    console.error('Firebase load error:',err);
+    crm=dCRM();talents=dTalents();veille=dVeille();contacts=dContacts();
+  }
+  renderAll();
+}
+async function save(){
+  try{
+    await Promise.all([
+      db.collection('data').doc('crm').set({items:crm}),
+      db.collection('data').doc('talents').set({items:talents}),
+      db.collection('data').doc('veille').set({items:veille}),
+      db.collection('data').doc('contacts').set({items:contacts})
+    ]);
+  }catch(err){console.error('Firebase save error:',err);}
+  const t=document.getElementById('toast');t.style.display='block';setTimeout(()=>t.style.display='none',2000);
+}
+
+// ── TALENT COLOR HELPERS ──────────────────────────────
+function talentIdx(nom){const i=talents.findIndex(t=>t.nom===nom);return i>=0?i:0;}
+function tColor(nom){return TALENT_COLORS[talentIdx(nom)%TALENT_COLORS.length];}
+function tColorSoft(nom){return TALENT_COLORS_SOFT[talentIdx(nom)%TALENT_COLORS_SOFT.length];}
+
+// ── DEFAULT DATA ──────────────────────────────────────
+function dCRM(){return[];}
+function dTalents(){return[
+  {id:1,nom:'Rhyno',niche:'Moto / Lifestyle',abos:'',eng:'',plats:['Instagram','YouTube'],notes:''},
+  {id:2,nom:'Sinan le petit marocain',niche:'Lifestyle / Humour',abos:'',eng:'',plats:['TikTok','Instagram'],notes:''},
+  {id:3,nom:'Yova1n',niche:'Lifestyle / Mode',abos:'',eng:'',plats:['Instagram','TikTok'],notes:''},
+  {id:4,nom:'Andji Cook',niche:'Food / Fitness',abos:'',eng:'',plats:['Instagram','YouTube'],notes:''},
+];}
+function dVeille(){return[];}
+function dContacts(){return[];}
+
+function renderAll(){renderCRM();renderTalents();renderVeille();fillFilters();renderAnalytics();}
+
+// ── PAGE NAV ──────────────────────────────────────────
+function showPage(id,btn){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('active');
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  if(id==='analytics')renderAnalytics();
+}
+function setView(v){
+  currentView=v;
+  document.getElementById('view-table').style.display=v==='table'?'block':'none';
+  document.getElementById('view-pipeline').style.display=v==='pipeline'?'block':'none';
+  document.getElementById('vt-table').classList.toggle('active',v==='table');
+  document.getElementById('vt-pipeline').classList.toggle('active',v==='pipeline');
+  if(v==='pipeline')renderPipeline();
+}
+function setPeriod(n,btn){
+  currentPeriod=n;
+  document.querySelectorAll('.pt-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  renderAnalytics();
+}
+function fillFilters(){
+  const opts='<option value="">Tous les talents</option>'+talents.map(t=>`<option value="${e(t.nom)}">${e(t.nom)}</option>`).join('');
+  document.getElementById('s-pq').innerHTML=opts;
+  document.getElementById('v-filter').innerHTML=opts;
+}
+
+// ── CRM ───────────────────────────────────────────────
+function renderCRM(){
+  const q=document.getElementById('s-search').value.toLowerCase();
+  const ft=document.getElementById('s-type').value;
+  const fs=document.getElementById('s-statut').value;
+  const fpq=document.getElementById('s-pq').value;
+  let rows=crm.filter(r=>{
+    if(ft&&r.type!==ft)return false;
+    if(fs&&r.statut!==fs)return false;
+    if(fpq&&r.pourQui!==fpq)return false;
+    if(q&&!r.nom.toLowerCase().includes(q)&&!(r.notes||'').toLowerCase().includes(q)&&!(r.pourQui||'').toLowerCase().includes(q))return false;
+    return true;
+  });
+  if(sortKey)rows.sort((a,b)=>{const v1=(a[sortKey]||'').toLowerCase(),v2=(b[sortKey]||'').toLowerCase();return sortAsc?v1.localeCompare(v2):v2.localeCompare(v1);});
+  document.getElementById('crm-tbody').innerHTML=rows.length?rows.map(r=>{
+    const col=r.pourQui?tColor(r.pourQui):'var(--muted)';
+    const colSoft=r.pourQui?tColorSoft(r.pourQui):'rgba(255,255,255,0.05)';
+    return`<tr>
+      <td class="td-name">${e(r.nom)}</td>
+      <td><span class="badge t-${r.type}">${TYPES[r.type]||r.type}</span></td>
+      <td class="td-m">${e(r.canal)}</td>
+      <td><span class="badge s-${r.statut}">${STATUTS[r.statut]||r.statut}</span></td>
+      <td>${r.pourQui?`<span style="background:${colSoft};color:${col};border:1px solid ${col}33;padding:3px 9px;border-radius:99px;font-size:11px;font-weight:600;font-family:'Space Mono',monospace;">${e(r.pourQui)}</span>`:'<span class="td-m">—</span>'}</td>
+      <td class="td-m">${r.date?fd(r.date):'—'}</td>
+      <td class="td-m td-ell" title="${e(r.action||'')}">${e(r.action)||'—'}</td>
+      <td class="td-m td-ell" title="${e(r.notes||'')}">${e(r.notes)||'—'}</td>
+      <td><div class="actions-cell">
+        <button class="btn-icon" title="Modifier" onclick="editRow('crm',${r.id})">✎</button>
+        <button class="btn-del" onclick="delRow('crm',${r.id})">🗑 Supprimer</button>
+      </div></td>
+    </tr>`;
+  }).join(''):`<tr><td colspan="9"><div class="empty-state"><p>Aucun prospect — cliquez sur Ajouter</p></div></td></tr>`;
+  const tot=crm.length,ct=crm.filter(r=>r.statut!=='new').length,ec=crm.filter(r=>['rep','nego'].includes(r.statut)).length,sg=crm.filter(r=>r.statut==='ok').length;
+  document.getElementById('crm-stats').innerHTML=`
+    <div class="stat"><div class="stat-label">Total</div><div class="stat-num">${tot}</div></div>
+    <div class="stat"><div class="stat-label">Contactés</div><div class="stat-num violet">${ct}</div></div>
+    <div class="stat"><div class="stat-label">En cours</div><div class="stat-num">${ec}</div></div>
+    <div class="stat"><div class="stat-label">Signés</div><div class="stat-num pink">${sg}</div></div>`;
+  if(currentView==='pipeline')renderPipeline();
+}
+
+function renderPipeline(){
+  document.getElementById('pipeline').innerHTML=STAT_ORDER.map(s=>{
+    const items=crm.filter(r=>r.statut===s);
+    return`<div class="pipe-col"><div class="pipe-col-hd"><span class="pipe-col-name">${STATUTS[s]}</span><span class="pipe-count">${items.length}</span></div>${items.map(r=>{
+      const col=r.pourQui?tColor(r.pourQui):'var(--muted)';
+      return`<div class="pipe-card" onclick="editRow('crm',${r.id})">
+        <div class="pipe-card-name">${e(r.nom)}</div>
+        <span class="badge t-${r.type}" style="font-size:10px">${TYPES[r.type]||r.type}</span>
+        ${r.pourQui?`<div class="pipe-card-pq" style="color:${col}">→ ${e(r.pourQui)}</div>`:''}
+        ${r.action?`<div class="pipe-card-action">${e(r.action)}</div>`:''}
+      </div>`;
+    }).join('')}</div>`;
+  }).join('');
+}
+function sortBy(k){sortKey===k?sortAsc=!sortAsc:(sortKey=k,sortAsc=true);renderCRM();}
+
+// ── TALENTS ───────────────────────────────────────────
+function renderTalents(){
+  const grid=document.getElementById('talent-grid');
+  if(!talents.length){grid.innerHTML=`<div class="empty-state" style="grid-column:1/-1"><p>Aucun talent</p></div>`;return;}
+  grid.innerHTML=talents.map((t,i)=>{
+    const col=TALENT_COLORS[i%TALENT_COLORS.length];
+    const colS=TALENT_COLORS_SOFT[i%TALENT_COLORS_SOFT.length];
+    return`<div class="t-card" style="border-color:${col}30">
+      <div class="t-ava" style="background:${colS};color:${col}">${t.nom.slice(0,2).toUpperCase()}</div>
+      <h4 style="color:${col}">${e(t.nom)}</h4>
+      <div class="t-meta">${e(t.niche)} · ${e(t.abos)} · ${e(t.eng)}</div>
+      <div class="t-plats">${(t.plats||[]).map(p=>`<span class="plat-tag" style="border-color:${col}30;color:${col}">${e(p)}</span>`).join('')}</div>
+      ${t.notes?`<div class="t-notes">${e(t.notes)}</div>`:''}
+      <div class="t-footer">
+        <button class="btn btn-sm" style="border-color:${col}40;color:${col};background:${colS}" onclick="editRow('talent',${t.id})">✎ Modifier</button>
+        <button class="btn-del btn-sm" onclick="delRow('talent',${t.id})">🗑</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ── VEILLE ────────────────────────────────────────────
+function renderVeille(){
+  const ft=document.getElementById('v-filter').value;
+  const items=veille.filter(v=>!ft||(v.pourQui||v.talent)===ft);
+  const grid=document.getElementById('veille-grid');
+  if(!items.length){grid.innerHTML=`<div class="empty-state" style="grid-column:1/-1"><p>Aucun créateur en veille</p></div>`;return;}
+  grid.innerHTML=items.map(v=>{
+    const pq=v.pourQui||v.talent||'';
+    const col=pq?tColor(pq):'var(--pink)';
+    const colS=pq?tColorSoft(pq):'var(--pinks)';
+    const pct=Math.min(100,Math.round((parseFloat(v.eng)||0)*10));
+    return`<div class="v-card" style="border-color:${col}25">
+      <div class="v-tbadge" style="background:${colS};color:${col};border:1px solid ${col}33">${e(pq||'—')}</div>
+      <h4>${e(v.nom)}</h4>
+      <div class="v-handle">${e(v.handle)} · ${e(v.abos)} abos</div>
+      <div class="eng-row"><span class="eng-lbl">Eng. ${v.eng}%</span><div class="eng-track"><div class="eng-fill" style="width:${pct}%;background:linear-gradient(90deg,${col},var(--pink))"></div></div></div>
+      ${v.collab?`<div class="v-info">↗ ${e(v.collab)}</div>`:''}
+      ${v.notes?`<div class="v-info">${e(v.notes)}</div>`:''}
+      <div class="v-footer">
+        <button class="btn btn-sm" style="border-color:${col}40;color:${col};background:${colS}" onclick="editRow('veille',${v.id})">✎ Modifier</button>
+        <button class="btn-del btn-sm" onclick="delRow('veille',${v.id})">🗑 Supprimer</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ── ANALYTICS ─────────────────────────────────────────
+function renderAnalytics(){
+  const today=new Date();
+  const days=[];
+  for(let i=currentPeriod-1;i>=0;i--){
+    const d=new Date(today);d.setDate(d.getDate()-i);
+    days.push(d.toISOString().slice(0,10));
+  }
+
+  // Compter contacts par jour (depuis le log ET depuis le CRM par date)
+  const crmByDate={};
+  crm.forEach(r=>{if(r.date)crmByDate[r.date]=(crmByDate[r.date]||0)+1;});
+  const logByDate={};
+  contacts.forEach(c=>{if(c.date)logByDate[c.date]=(logByDate[c.date]||0)+1;});
+
+  const dailyCounts=days.map(d=>(crmByDate[d]||0)+(logByDate[d]||0));
+  const total=dailyCounts.reduce((a,b)=>a+b,0);
+  const avg=total>0?Math.round((total/currentPeriod)*10)/10:0;
+  const maxDay=Math.max(...dailyCounts,1);
+  const objectif=10; // objectif/jour
+
+  // KPI cards
+  const totalContacts=contacts.length+crm.length;
+  const repues=contacts.filter(c=>c.reponse).length+crm.filter(r=>r.statut!=='new').length;
+  const signes=crm.filter(r=>r.statut==='ok').length;
+  const txRep=totalContacts>0?Math.round(repues/totalContacts*100):0;
+  document.getElementById('a-stats').innerHTML=`
+    <div class="a-stat"><div class="a-stat-label">Contacts totaux</div><div class="a-stat-num" style="color:var(--pink)">${totalContacts}</div><div class="a-stat-sub">depuis le début</div></div>
+    <div class="a-stat"><div class="a-stat-label">Moy. / jour</div><div class="a-stat-num" style="color:var(--violet)">${avg}</div><div class="a-stat-sub">sur ${currentPeriod} jours</div></div>
+    <div class="a-stat"><div class="a-stat-label">Taux réponse</div><div class="a-stat-num" style="color:#3cdc78">${txRep}%</div><div class="a-stat-sub">${repues} réponses</div></div>
+    <div class="a-stat"><div class="a-stat-label">Signés</div><div class="a-stat-num" style="color:#ffc83c">${signes}</div><div class="a-stat-sub">deals conclus</div></div>`;
+
+  // Chart
+  const labels=days.map(d=>{const dt=new Date(d+'T00:00');return dt.toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit'});});
+  const avgLine=Array(days.length).fill(avg);
+  const objLine=Array(days.length).fill(objectif);
+  document.getElementById('chart-sub').textContent=`Objectif : ${objectif} contacts/jour · Moyenne actuelle : ${avg}/jour`;
+
+  if(dailyChart)dailyChart.destroy();
+  const ctx=document.getElementById('daily-chart').getContext('2d');
+  dailyChart=new Chart(ctx,{
+    type:'bar',
+    data:{
+      labels,
+      datasets:[
+        {label:'Contacts',data:dailyCounts,backgroundColor:'rgba(255,63,164,0.25)',borderColor:'#ff3fa4',borderWidth:2,borderRadius:5,borderSkipped:false},
+        {label:'Moyenne',data:avgLine,type:'line',borderColor:'#9b59f5',borderWidth:2,borderDash:[6,4],pointRadius:0,fill:false,tension:0},
+        {label:'Objectif',data:objLine,type:'line',borderColor:'#ffc83c',borderWidth:1.5,borderDash:[3,3],pointRadius:0,fill:false,tension:0},
+      ]
+    },
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{backgroundColor:'#1a1a1a',borderColor:'rgba(255,255,255,0.1)',borderWidth:1,titleColor:'#f5f0ff',bodyColor:'#888',padding:10}},
+      scales:{
+        x:{grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'#666',font:{size:11}}},
+        y:{grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'#666',font:{size:11}},beginAtZero:true,suggestedMax:Math.max(maxDay,objectif)+2}
+      }
+    }
+  });
+
+  // Répartition statuts
+  const statutBreak=STAT_ORDER.map(s=>({label:STATUTS[s],count:crm.filter(r=>r.statut===s).length,color:['#60b4ff','#ffc83c','#3cdc78','#9b59f5','#ff3fa4','#666'][STAT_ORDER.indexOf(s)]})).filter(x=>x.count>0);
+  const stTotal=statutBreak.reduce((a,b)=>a+b.count,0)||1;
+  document.getElementById('statut-breakdown').innerHTML=statutBreak.map(s=>`
+    <div class="breakdown-item">
+      <div class="breakdown-dot" style="background:${s.color}"></div>
+      <div class="breakdown-name">${s.label}</div>
+      <div class="obj-bar-wrap"><div class="obj-bar" style="width:${Math.round(s.count/stTotal*100)}%;background:${s.color}"></div></div>
+      <div class="breakdown-count">${s.count}</div>
+      <div class="breakdown-pct">${Math.round(s.count/stTotal*100)}%</div>
+    </div>`).join('')||'<div style="color:var(--muted);font-size:13px;padding:20px 0">Aucun prospect</div>';
+
+  // Répartition par talent
+  const talentBreak=talents.map((t,i)=>{
+    const cnt=crm.filter(r=>r.pourQui===t.nom).length+contacts.filter(c=>c.pourQui===t.nom).length;
+    return{nom:t.nom,count:cnt,color:TALENT_COLORS[i%TALENT_COLORS.length]};
+  }).filter(x=>x.count>0);
+  const tTotal=talentBreak.reduce((a,b)=>a+b.count,0)||1;
+  document.getElementById('talent-breakdown').innerHTML=talentBreak.length?talentBreak.map(t=>`
+    <div class="breakdown-item">
+      <div class="breakdown-dot" style="background:${t.color}"></div>
+      <div class="breakdown-name">${e(t.nom)}</div>
+      <div class="obj-bar-wrap"><div class="obj-bar" style="width:${Math.round(t.count/tTotal*100)}%;background:${t.color}"></div></div>
+      <div class="breakdown-count">${t.count}</div>
+      <div class="breakdown-pct">${Math.round(t.count/tTotal*100)}%</div>
+    </div>`).join(''):'<div style="color:var(--muted);font-size:13px;padding:20px 0">Aucun contact logué</div>';
+
+  // Objectifs du mois
+  const now=new Date();
+  const monthStart=new Date(now.getFullYear(),now.getMonth(),1).toISOString().slice(0,10);
+  const monthEnd=new Date(now.getFullYear(),now.getMonth()+1,0).toISOString().slice(0,10);
+  const thisMonth=contacts.filter(c=>c.date>=monthStart&&c.date<=monthEnd).length+crm.filter(r=>r.date>=monthStart&&r.date<=monthEnd).length;
+  const repMonth=contacts.filter(c=>c.date>=monthStart&&c.date<=monthEnd&&c.reponse).length+crm.filter(r=>r.date>=monthStart&&r.date<=monthEnd&&r.statut!=='new').length;
+  document.getElementById('obj-month').textContent=now.toLocaleDateString('fr-FR',{month:'long',year:'numeric'});
+  const goals=[
+    {label:'Prises de contact',current:thisMonth,target:250,unit:'contacts'},
+    {label:'Réponses qualifiées',current:repMonth,target:30,unit:'réponses'},
+    {label:'Échanges avancés',current:crm.filter(r=>['nego','rep'].includes(r.statut)).length,target:10,unit:'échanges'},
+    {label:'Deals signés',current:crm.filter(r=>r.statut==='ok').length,target:3,unit:'deals'},
+  ];
+  document.getElementById('objectives').innerHTML=goals.map(g=>{
+    const pct=Math.min(100,Math.round(g.current/g.target*100));
+    const col=pct>=100?'#3cdc78':pct>=60?'#ffc83c':'#ff3fa4';
+    return`<div class="obj-row">
+      <div class="obj-label">${g.label}</div>
+      <div class="obj-bar-wrap"><div class="obj-bar" style="width:${pct}%;background:${col}"></div></div>
+      <div class="obj-val" style="color:${col};min-width:80px;text-align:right">${g.current} / ${g.target}</div>
+    </div>`;
+  }).join('');
+}
+
+// ── MODAL ─────────────────────────────────────────────
+function openModal(mode,data){
+  modalMode=mode;editId=data?data.id:null;
+  document.getElementById('modal-title').textContent=
+    mode==='crm'?(data?'Modifier prospect':'Nouveau prospect'):
+    mode==='talent'?(data?'Modifier talent':'Nouveau talent'):
+    mode==='veille'?(data?'Modifier créateur':'Nouveau créateur en veille'):
+    'Loguer un contact';
+
+  const tOpts=`<option value="">— Aucun —</option>`+talents.map(t=>`<option value="${e(t.nom)}"${data?.pourQui===t.nom?' selected':''}>${e(t.nom)}</option>`).join('');
+  let html='';
+
+  if(mode==='crm'){
+    html=`
+    <div class="field"><label>Nom / Compte *</label><input type="text" id="m-nom" value="${e(data?.nom||'')}" placeholder="ex: Nike France"></div>
+    <div class="field-row">
+      <div class="field"><label>Type</label><select id="m-type">${Object.entries(TYPES).map(([k,v])=>`<option value="${k}"${data?.type===k?' selected':''}>${v}</option>`).join('')}</select></div>
+      <div class="field"><label>Canal</label><select id="m-canal">${CANAUX.map(c=>`<option${data?.canal===c?' selected':''}>${c}</option>`).join('')}</select></div>
+    </div>
+    <div class="field-row">
+      <div class="field"><label>Statut</label><select id="m-statut">${Object.entries(STATUTS).map(([k,v])=>`<option value="${k}"${data?.statut===k?' selected':''}>${v}</option>`).join('')}</select></div>
+      <div class="field"><label>Pour qui ?</label><select id="m-pq">${tOpts}</select></div>
+    </div>
+    <div class="field"><label>Date du contact</label><input type="date" id="m-date" value="${data?.date||''}"></div>
+    <div class="field"><label>Prochaine action</label><input type="text" id="m-action" value="${e(data?.action||'')}" placeholder="ex: Relance J+7"></div>
+    <div class="field"><label>Notes</label><textarea id="m-notes">${e(data?.notes||'')}</textarea></div>`;
+  } else if(mode==='talent'){
+    html=`
+    <div class="field"><label>Nom / Pseudo *</label><input type="text" id="m-nom" value="${e(data?.nom||'')}"></div>
+    <div class="field"><label>Niche</label><input type="text" id="m-niche" value="${e(data?.niche||'')}" placeholder="ex: Moto / Lifestyle"></div>
+    <div class="field-row">
+      <div class="field"><label>Abonnés</label><input type="text" id="m-abos" value="${e(data?.abos||'')}" placeholder="42k"></div>
+      <div class="field"><label>Engagement</label><input type="text" id="m-eng" value="${e(data?.eng||'')}" placeholder="5.2%"></div>
+    </div>
+    <div class="field"><label>Plateformes (virgule)</label><input type="text" id="m-plats" value="${e((data?.plats||[]).join(', '))}" placeholder="Instagram, TikTok, YouTube"></div>
+    <div class="field"><label>Notes</label><textarea id="m-notes">${e(data?.notes||'')}</textarea></div>`;
+  } else if(mode==='veille'){
+    const vOpts=`<option value="">— Aucun —</option>`+talents.map(t=>`<option value="${e(t.nom)}"${(data?.pourQui||data?.talent)===t.nom?' selected':''}>${e(t.nom)}</option>`).join('');
+    html=`
+    <div class="field"><label>Pour qui ? (talent)</label><select id="m-pq">${vOpts}</select></div>
+    <div class="field"><label>Nom du créateur *</label><input type="text" id="m-nom" value="${e(data?.nom||'')}"></div>
+    <div class="field-row">
+      <div class="field"><label>Handle (@)</label><input type="text" id="m-handle" value="${e(data?.handle||'')}" placeholder="@pseudo"></div>
+      <div class="field"><label>Niche</label><input type="text" id="m-niche" value="${e(data?.niche||'')}"></div>
+    </div>
+    <div class="field-row">
+      <div class="field"><label>Abonnés</label><input type="text" id="m-abos" value="${e(data?.abos||'')}"></div>
+      <div class="field"><label>Engagement (%)</label><input type="number" id="m-eng" step="0.1" value="${data?.eng||''}"></div>
+    </div>
+    <div class="field"><label>Collabs détectées</label><input type="text" id="m-collab" value="${e(data?.collab||'')}" placeholder="ex: Nike, GoPro"></div>
+    <div class="field"><label>Notes</label><textarea id="m-notes">${e(data?.notes||'')}</textarea></div>`;
+  } else if(mode==='contact'){
+    const today=new Date().toISOString().slice(0,10);
+    const vOpts2=`<option value="">— Aucun —</option>`+talents.map(t=>`<option value="${e(t.nom)}">${e(t.nom)}</option>`).join('');
+    html=`
+    <div class="field"><label>Nom / Compte *</label><input type="text" id="m-nom" value="" placeholder="Qui tu as contacté ?"></div>
+    <div class="field-row">
+      <div class="field"><label>Pour qui ?</label><select id="m-pq">${vOpts2}</select></div>
+      <div class="field"><label>Date</label><input type="date" id="m-date" value="${today}"></div>
+    </div>
+    <div class="field-row">
+      <div class="field"><label>Canal</label><select id="m-canal">${CANAUX.map(c=>`<option>${c}</option>`).join('')}</select></div>
+      <div class="field"><label>Réponse reçue ?</label><select id="m-rep"><option value="0">Non</option><option value="1">Oui</option></select></div>
+    </div>
+    <div class="field"><label>Notes</label><textarea id="m-notes" placeholder="Contexte, remarques..."></textarea></div>`;
+  }
+  document.getElementById('modal-body').innerHTML=html;
+  document.getElementById('overlay').classList.add('open');
+  setTimeout(()=>document.getElementById('m-nom')?.focus(),50);
+}
+
+function closeModal(){document.getElementById('overlay').classList.remove('open');}
+
+function saveModal(){
+  const nomEl=document.getElementById('m-nom');
+  const nom=nomEl?.value?.trim();
+  if(!nom){nomEl.style.borderColor='var(--pink)';nomEl.focus();return;}
+  nomEl.style.borderColor='';
+
+  if(modalMode==='crm'){
+    const row={id:editId||Date.now(),nom,type:document.getElementById('m-type').value,canal:document.getElementById('m-canal').value,statut:document.getElementById('m-statut').value,pourQui:document.getElementById('m-pq').value,date:document.getElementById('m-date').value,action:document.getElementById('m-action').value.trim(),notes:document.getElementById('m-notes').value.trim()};
+    editId?(crm=crm.map(r=>r.id===editId?row:r)):crm.push(row);
+    renderCRM();
+  } else if(modalMode==='talent'){
+    const row={id:editId||Date.now(),nom,niche:document.getElementById('m-niche').value.trim(),abos:document.getElementById('m-abos').value.trim(),eng:document.getElementById('m-eng').value.trim(),plats:document.getElementById('m-plats').value.split(',').map(s=>s.trim()).filter(Boolean),notes:document.getElementById('m-notes').value.trim()};
+    editId?(talents=talents.map(t=>t.id===editId?row:t)):talents.push(row);
+    renderTalents();fillFilters();
+  } else if(modalMode==='veille'){
+    const pq=document.getElementById('m-pq').value;
+    const row={id:editId||Date.now(),pourQui:pq,talent:pq,nom,handle:document.getElementById('m-handle').value.trim(),niche:document.getElementById('m-niche').value.trim(),abos:document.getElementById('m-abos').value.trim(),eng:parseFloat(document.getElementById('m-eng').value)||0,collab:document.getElementById('m-collab').value.trim(),notes:document.getElementById('m-notes').value.trim()};
+    editId?(veille=veille.map(v=>v.id===editId?row:v)):veille.push(row);
+    renderVeille();
+  } else if(modalMode==='contact'){
+    const row={id:Date.now(),nom,pourQui:document.getElementById('m-pq').value,date:document.getElementById('m-date').value,canal:document.getElementById('m-canal').value,reponse:document.getElementById('m-rep').value==='1',notes:document.getElementById('m-notes').value.trim()};
+    contacts.push(row);
+    renderAnalytics();
+  }
+  save();closeModal();
+}
+
+function editRow(mode,id){
+  if(mode==='crm')openModal('crm',crm.find(r=>r.id===id));
+  else if(mode==='talent')openModal('talent',talents.find(t=>t.id===id));
+  else openModal('veille',veille.find(v=>v.id===id));
+}
+function delRow(mode,id){
+  if(!confirm('Supprimer cet élément ?'))return;
+  if(mode==='crm'){crm=crm.filter(r=>r.id!==id);renderCRM();}
+  else if(mode==='talent'){talents=talents.filter(t=>t.id!==id);renderTalents();fillFilters();}
+  else{veille=veille.filter(v=>v.id!==id);renderVeille();}
+  save();
+}
+
+function e(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function fd(d){try{return new Date(d+'T00:00').toLocaleDateString('fr-FR');}catch(ex){return d;}}
+
+document.addEventListener('keydown',ev=>{if(ev.key==='Escape')closeModal();});
+document.getElementById('overlay').addEventListener('click',ev=>{if(ev.target===document.getElementById('overlay'))closeModal();});
+load();
+</script>
+</body>
+</html>

@@ -1,0 +1,123 @@
+#mood-panel {
+  position: fixed; top: 60px; right: 0;
+  width: 300px; height: calc(100vh - 60px);
+  background: #111; border-left: 1px solid rgba(255,255,255,0.08);
+  z-index: 99999; font-family: 'Space Grotesk',-apple-system,sans-serif;
+  font-size: 13px; color: #f5f0ff; overflow-y: auto;
+  box-shadow: -8px 0 32px rgba(0,0,0,0.5);
+  animation: moodSlideIn .25s ease;
+  transition: transform .25s ease;
+}
+@keyframes moodSlideIn { from{transform:translateX(320px)} to{transform:translateX(0)} }
+#mood-panel::-webkit-scrollbar{width:4px}
+#mood-panel::-webkit-scrollbar-thumb{background:#333;border-radius:2px}
+
+/* HEADER */
+.mood-header{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;border-bottom:1px solid rgba(255,255,255,0.07);background:#0a0a0a;position:sticky;top:0;z-index:10}
+.mood-logo{font-size:14px;font-weight:700;letter-spacing:-0.3px}
+.mood-logo span{color:#00ff80}
+.mood-header-right{display:flex;align-items:center;gap:6px}
+.mood-close,.mood-pin{background:none;border:1px solid rgba(255,255,255,0.12);color:#888;width:26px;height:26px;border-radius:6px;cursor:pointer;font-size:12px;display:flex;align-items:center;justify-content:center;transition:all .15s}
+.mood-close:hover{color:#fff;border-color:rgba(255,255,255,0.3)}
+.mood-pin:hover{color:#fff}
+
+/* PROFILE */
+.mood-profile{padding:14px;border-bottom:1px solid rgba(255,255,255,0.07)}
+.mood-handle{font-size:11px;color:#666;font-family:monospace;margin-bottom:2px}
+.mood-name{font-size:17px;font-weight:700;letter-spacing:-0.3px;margin-bottom:7px}
+.mood-tier-row{display:flex;align-items:center;gap:6px;margin-bottom:8px;flex-wrap:wrap}
+.mood-tier{font-size:10px;font-weight:600;padding:2px 7px;border-radius:99px;background:rgba(155,89,245,0.15);color:#9b59f5;border:1px solid rgba(155,89,245,0.25);font-family:monospace}
+.mood-abos-num{font-size:12px;color:#888;font-family:monospace}
+.mood-niche-pill{font-size:10px;font-weight:600;padding:2px 7px;border-radius:99px;background:rgba(255,63,164,0.12);color:#ff3fa4;border:1px solid rgba(255,63,164,0.2);font-family:monospace}
+.mood-keywords{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:8px}
+.mood-kw{padding:2px 8px;border-radius:99px;font-size:11px;font-weight:600;background:rgba(255,63,164,0.08);color:#ff3fa4;border:1px solid rgba(255,63,164,0.15);font-family:monospace}
+.mood-bio{font-size:12px;color:#999;line-height:1.5;padding:8px;background:rgba(255,255,255,0.03);border-radius:6px;border:1px solid rgba(255,255,255,0.06);margin-bottom:10px}
+
+/* LIENS */
+.mood-links-section{margin-top:6px}
+.mood-links-title{font-size:11px;font-weight:600;color:#555;text-transform:uppercase;letter-spacing:.07em;font-family:monospace;margin-bottom:7px}
+.mood-links-list{display:flex;flex-direction:column;gap:5px}
+.mood-link-item{display:flex;align-items:center;gap:7px;padding:6px 9px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.07);border-radius:7px;color:#aaa;text-decoration:none;font-size:12px;transition:all .15s}
+.mood-link-item:hover{background:rgba(255,255,255,0.08);color:#fff;border-color:rgba(255,255,255,0.15)}
+.mood-link-icon{font-size:13px;flex-shrink:0}
+
+/* TABS */
+.mood-tabs{display:flex;border-bottom:1px solid rgba(255,255,255,0.07);background:#0d0d0d;position:sticky;top:50px;z-index:9}
+.mood-tab{flex:1;padding:9px 2px;border:none;background:none;color:#555;font-family:'Space Grotesk',sans-serif;font-size:11px;font-weight:600;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;transition:all .15s;text-transform:uppercase;letter-spacing:.04em}
+.mood-tab:hover{color:#aaa}
+.mood-tab.active{color:#ff3fa4;border-bottom-color:#ff3fa4}
+.mood-tab-content{display:block}
+
+/* SECTION */
+.mood-section{padding:14px}
+.mood-section-title{font-size:11px;font-weight:600;color:#555;text-transform:uppercase;letter-spacing:.07em;font-family:monospace;margin-bottom:10px}
+.mood-divider{height:1px;background:rgba(255,255,255,0.06)}
+.mood-muted{font-size:12px;color:#444}
+
+/* INPUTS */
+.mood-select,.mood-input{width:100%;padding:8px 10px;background:#1a1a1a;border:1px solid rgba(255,255,255,0.09);color:#f5f0ff;border-radius:7px;font-size:12px;font-family:inherit;margin-bottom:7px;outline:none;transition:border-color .15s}
+.mood-select:focus,.mood-input:focus{border-color:rgba(155,89,245,0.5)}
+.mood-select{cursor:pointer;height:34px}
+.mood-select option{background:#1a1a1a}
+.mood-input::placeholder{color:#444}
+input[type=number].mood-input{-moz-appearance:textfield}
+
+/* BUTTONS */
+.mood-btn{width:100%;padding:9px;border-radius:8px;border:none;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;transition:all .15s;display:flex;align-items:center;justify-content:center;margin-top:2px}
+.mood-btn-pink{background:#ff3fa4;color:#fff}
+.mood-btn-pink:hover{background:#ff5cb4}
+.mood-btn-violet{background:rgba(155,89,245,0.15);color:#9b59f5;border:1px solid rgba(155,89,245,0.3)}
+.mood-btn-violet:hover{background:rgba(155,89,245,0.25)}
+.mood-btn-save{background:rgba(255,255,255,0.05);color:#888;border:1px solid rgba(255,255,255,0.1);width:100%;padding:8px;border-radius:7px;font-family:inherit;font-size:12px;cursor:pointer;transition:all .15s}
+.mood-btn-save:hover{background:rgba(255,255,255,0.1);color:#fff}
+.mood-btn-add{width:34px;height:34px;border-radius:7px;border:1px solid rgba(255,63,164,0.35);background:rgba(255,63,164,0.1);color:#ff3fa4;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .15s}
+.mood-btn-add:hover{background:rgba(255,63,164,0.22)}
+.mood-btn-visit{display:flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:6px;background:rgba(255,255,255,0.06);color:#aaa;text-decoration:none;font-size:13px;transition:all .15s;flex-shrink:0}
+.mood-btn-visit:hover{background:rgba(255,255,255,0.14);color:#fff}
+
+/* BADGES */
+.mood-badge{padding:2px 8px;border-radius:99px;font-size:10px;font-weight:600;font-family:monospace}
+.mood-badge-marque{background:rgba(255,63,164,0.12);color:#ff3fa4;border:1px solid rgba(255,63,164,0.25)}
+.mood-badge-createur{background:rgba(96,180,255,0.12);color:#60b4ff;border:1px solid rgba(96,180,255,0.25)}
+
+/* TAGS */
+.mood-tags{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:4px}
+.mood-tag{padding:3px 8px;background:rgba(155,89,245,0.12);border:1px solid rgba(155,89,245,0.22);border-radius:99px;font-size:11px;color:#9b59f5;font-family:monospace}
+
+/* SIMILAIRES */
+.mood-similar-sub{font-size:11px;color:#444;margin-bottom:10px}
+.mood-similar-item{display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.05)}
+.mood-similar-item:last-child{border-bottom:none}
+.mood-similar-emoji{font-size:18px;flex-shrink:0}
+.mood-similar-info{flex:1;min-width:0}
+.mood-similar-name{font-size:12px;font-weight:600;margin-bottom:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mood-similar-handle{font-size:11px;color:#555;font-family:monospace}
+.mood-similar-actions{display:flex;gap:5px;align-items:center;flex-shrink:0}
+.mood-similar-add{padding:3px 8px;border-radius:6px;border:1px solid rgba(155,89,245,0.3);background:rgba(155,89,245,0.1);color:#9b59f5;font-size:13px;font-weight:700;cursor:pointer;transition:all .15s}
+.mood-similar-add:hover{background:rgba(155,89,245,0.22)}
+
+/* COLLABS MANUELLES */
+.mood-collab-item{display:flex;align-items:center;justify-content:space-between;padding:3px 0}
+.mood-collab-del{background:none;border:none;color:#444;cursor:pointer;font-size:12px;padding:2px 5px;border-radius:4px;transition:color .15s}
+.mood-collab-del:hover{color:#ff6060}
+
+/* RESCAN */
+.mood-rescan{background:rgba(155,89,245,0.1);border:1px solid rgba(155,89,245,0.22);color:#9b59f5;border-radius:5px;padding:2px 8px;font-size:10px;cursor:pointer;font-family:monospace;transition:all .15s}
+.mood-rescan:hover{background:rgba(155,89,245,0.22)}
+
+/* STATS */
+.mood-stats-note{font-size:11px;color:#444;line-height:1.5;padding:8px;background:rgba(255,255,255,0.03);border-radius:6px;border:1px solid rgba(255,255,255,0.06);margin-bottom:12px}
+.mood-stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px}
+.mood-stat-box{background:#1a1a1a;border:1px solid rgba(255,255,255,0.07);border-radius:8px;padding:10px;text-align:center}
+.mood-stat-val{font-size:18px;font-weight:700;color:#ff3fa4;letter-spacing:-0.5px;margin-bottom:3px}
+.mood-stat-lbl{font-size:10px;color:#555;text-transform:uppercase;letter-spacing:.06em;font-family:monospace}
+.mood-collab-table-title{font-size:11px;font-weight:600;color:#555;text-transform:uppercase;letter-spacing:.07em;font-family:monospace;margin-bottom:8px}
+.mood-collab-table{border:1px solid rgba(255,255,255,0.07);border-radius:8px;overflow:hidden}
+.mood-table-head{display:grid;grid-template-columns:1fr auto;padding:7px 10px;background:#1a1a1a;font-size:10px;font-weight:600;color:#555;text-transform:uppercase;letter-spacing:.06em;font-family:monospace;border-bottom:1px solid rgba(255,255,255,0.07)}
+.mood-table-row{display:grid;grid-template-columns:1fr auto;padding:7px 10px;border-bottom:1px solid rgba(255,255,255,0.05);font-size:12px}
+.mood-table-row:last-child{border-bottom:none}
+.mood-table-brand{color:#f5f0ff;font-family:monospace}
+.mood-table-type{color:#9b59f5;font-size:10px;font-family:monospace}
+
+/* TOAST */
+.mood-toast{position:sticky;bottom:12px;margin:0 14px 12px;background:#1a1a1a;border:1px solid rgba(155,89,245,0.4);border-radius:8px;padding:10px 14px;font-size:12px;color:#9b59f5;font-weight:600;text-align:center}

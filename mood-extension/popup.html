@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:#111;color:#f5f0ff;font-family:'Space Grotesk',-apple-system,sans-serif;width:240px;padding:16px;}
+.logo{font-size:15px;font-weight:700;letter-spacing:-0.5px;margin-bottom:4px;}
+.logo span{color:#ff3fa4;}
+.sub{font-size:11px;color:#666;margin-bottom:16px;font-family:monospace;}
+.status{background:#1a1a1a;border:1px solid rgba(255,255,255,0.08);border-radius:8px;padding:12px;margin-bottom:12px;}
+.status-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;}
+.status-row:last-child{margin-bottom:0;}
+.status-label{font-size:12px;color:#888;}
+.status-val{font-size:13px;font-weight:600;}
+.status-val.pink{color:#ff3fa4;}
+.status-val.violet{color:#9b59f5;}
+.dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:#ff3fa4;margin-right:6px;box-shadow:0 0 5px #ff3fa4;}
+.tip{font-size:11px;color:#555;line-height:1.5;border-top:1px solid rgba(255,255,255,0.07);padding-top:12px;}
+</style>
+</head>
+<body>
+<div class="logo">mood radar <span>◎</span></div>
+<div class="sub">Instagram Scout</div>
+<div class="status" id="status">
+  <div style="font-size:12px;color:#888">Chargement...</div>
+</div>
+<div class="tip">
+  <span class="dot"></span>Visite un profil Instagram pour voir le panneau s'ouvrir automatiquement.
+</div>
+<script>
+chrome.storage.local.get(['mood_crm','mood_veille','mood_contacts'], (r) => {
+  const crm = r.mood_crm || [];
+  const veille = r.mood_veille || [];
+  document.getElementById('status').innerHTML = `
+    <div class="status-row"><span class="status-label">Prospects CRM</span><span class="status-val pink">${crm.length}</span></div>
+    <div class="status-row"><span class="status-label">En veille</span><span class="status-val violet">${veille.length}</span></div>
+    <div class="status-row"><span class="status-label">Statut</span><span class="status-val" style="color:#3cdc78">● Actif</span></div>
+  `;
+});
+</script>
+</body>
+</html>
