@@ -4,7 +4,7 @@
   "version": "1.0",
   "description": "Scanne les profils Instagram et envoie les infos dans ton CRM Mood Agency",
   "permissions": ["storage", "activeTab", "scripting"],
-  "host_permissions": ["https://www.instagram.com/*", "https://firestore.googleapis.com/*"],
+  "host_permissions": ["https://www.instagram.com/*", "https://firestore.googleapis.com/*", "https://mood-agency-crm.netlify.app/*"],
   "content_scripts": [
     {
       "matches": ["https://www.instagram.com/*"],
