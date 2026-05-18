@@ -21,22 +21,26 @@ exports.handler = async (event) => {
     let prompt;
 
     if (mode === 'brands') {
-      prompt = `Tu es un expert en influence marketing. En te basant sur ce profil Instagram, donne une liste de 10 VRAIES marques existantes à prospecter pour un partenariat d'influence.
+      prompt = `Tu es un expert en influence marketing spécialisé dans la prospection de marques pour des créateurs de contenu.
 
-Profil : ${profileData.username}
-Bio : ${profileData.bio || 'Non renseignée'}
-Abonnés : ${profileData.followers || 'Inconnu'}
-Niche : ${profileData.niche || 'Non détectée'}
+Profil Instagram à analyser :
+- Handle : ${profileData.username}
+- Bio : ${profileData.bio || 'Non renseignée'}
+- Abonnés : ${profileData.followers || 'Inconnu'}
+- Niche : ${profileData.niche || 'Non détectée'}
 
-RÈGLES STRICTES :
-- Donne UNIQUEMENT de vraies marques qui existent (ex: Nike, Adidas, Coca-Cola, L'Oréal, Samsung, Spotify, Uber Eats...)
-- JAMAIS de catégories génériques comme "Startups tech" ou "Marques locales" — uniquement des noms de marques réels
-- Mélange grandes marques (Nike, Samsung...) et marques moyennes (Gymshark, Frichti...)
-- Adapte au profil, à son audience et à sa niche
-- Pour chaque marque, explique en 1 phrase pourquoi elle correspond à CE créateur précisément
+Génère une liste de 10 marques PRODUITS ou SERVICES réels à prospecter pour un partenariat payé avec ce créateur.
 
-Réponds en JSON UNIQUEMENT, sans texte avant ni après, sans bloc de code, format exact :
-[{"nom": "Nike", "type": "Sport", "raison": "Correspond au lifestyle sportif du créateur", "instagram": "@nike"}, ...]`;
+RÈGLES ABSOLUES :
+1. JAMAIS de plateformes sociales (pas de Meta, TikTok, Instagram, Snapchat, YouTube, Twitter)
+2. JAMAIS de services de streaming (pas de Netflix, Disney+, Spotify, Deezer)
+3. UNIQUEMENT des marques qui font des campagnes avec des influenceurs : alimentation, mode, beauté, lifestyle, tech grand public, sport, gaming, food delivery, boissons, etc.
+4. Marques réelles qui existent : ex. Nike, Adidas, McDonald's, Uber Eats, L'Oréal, Red Bull, H&M, Zara, Deliveroo, Foot Locker, Decathlon, Gymshark, etc.
+5. Adapte les suggestions à l'audience et au contenu de CE créateur spécifiquement
+6. Mélange 5 grandes marques connues + 5 marques moyennes accessibles aux micro-influenceurs
+
+Réponds en JSON UNIQUEMENT, sans texte avant ni après, sans bloc de code :
+[{"nom": "Nike", "type": "Sport", "raison": "Audience jeune masculine très engagée sur le sport et le streetwear", "instagram": "@nike"}, ...]`;
     } else {
       prompt = `Tu es un expert en influence marketing. Analyse ce profil Instagram et donne une évaluation concise en français.
 
