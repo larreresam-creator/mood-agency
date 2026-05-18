@@ -415,6 +415,8 @@ function buildPanelHTML(p, talents) {
           <button class="mood-rescan" id="mood-rescan">↻ Rescanner</button>
         </div>
         <div class="mood-tags" id="mood-collab-list">${collabHTML}</div>
+        <button class="mood-btn mood-btn-violet" id="mood-scrape-apify" style="margin-top:10px">🔍 Scraper avec Apify</button>
+        <div id="mood-apify-result" style="display:none;margin-top:10px;font-size:11px"></div>
       </div>
       <div class="mood-divider"></div>
       <div class="mood-section">
@@ -515,6 +517,56 @@ function bindPanelEvents(profile, talents) {
     crm.push(row);
     await fbSet('crm', crm);
     showToast('✓ Ajouté au CRM !');
+  };
+
+  // Scraping Apify
+  document.getElementById('mood-scrape-apify').onclick = async () => {
+    const btn = document.getElementById('mood-scrape-apify');
+    const result = document.getElementById('mood-apify-result');
+    btn.textContent = '⏳ Scraping en cours... (30-60s)';
+    btn.disabled = true;
+    result.style.display = 'none';
+    try {
+      const r = await fetch('https://mood-agency-crm.netlify.app/.netlify/functions/scrape-collabs', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: profile.handle })
+      });
+      const data = await r.json();
+      if (data.error) {
+        result.innerHTML = `<span style="color:#ff6b6b">Erreur: ${data.error}</span>`;
+      } else if (data.collabBrands?.length === 0) {
+        result.innerHTML = '<span style="color:#aaa">Aucune collab sponsorisée détectée dans les 50 derniers posts.</span>';
+      } else {
+        let html = `<div style="color:#ff3fa4;font-weight:600;margin-bottom:8px">✓ ${data.collabBrands.length} marque(s) détectée(s)</div>`;
+        html += data.collabBrands.map(b => `<span class="mood-tag">${b}</span>`).join('');
+        if (data.competitors?.length > 0) {
+          html += `<div style="color:#9b59f5;font-weight:600;margin:10px 0 6px">🎯 Concurrents à prospecter :</div>`;
+          data.competitors.forEach(c => {
+            html += `<div style="margin-bottom:6px"><span style="color:#ff3fa4">${c.brand}</span> → `;
+            html += (c.competitors || []).map(x => `<span class="mood-tag" style="cursor:pointer" data-prospect="${x}">${x} +</span>`).join(' ');
+            html += '</div>';
+          });
+        }
+        result.innerHTML = html;
+        result.querySelectorAll('[data-prospect]').forEach(el => {
+          el.addEventListener('click', async () => {
+            const nom = el.getAttribute('data-prospect');
+            const crm = await fbGet('crm') || [];
+            crm.push({ id: Date.now(), nom, type: 'marque', canal: 'Email', statut: 'new', pourQui: '', date: new Date().toISOString().slice(0,10), action: 'Contacter pour partenariat', notes: `Concurrent détecté via Apify scraping de ${profile.handle}` });
+            await fbSet('crm', crm);
+            el.style.background = '#2a7a2a';
+            el.textContent = el.textContent.replace(' +', ' ✓');
+          });
+        });
+      }
+      result.style.display = 'block';
+    } catch(e) {
+      result.innerHTML = '<span style="color:#ff6b6b">Erreur réseau. Réessaie.</span>';
+      result.style.display = 'block';
+    }
+    btn.textContent = '🔍 Scraper avec Apify';
+    btn.disabled = false;
   };
 
   // Analyse IA
