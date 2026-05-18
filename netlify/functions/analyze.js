@@ -13,7 +13,7 @@ exports.handler = async (event) => {
   }
 
   try {
-    const { profileData, mode } = JSON.parse(event.body || '{}');
+    const { profileData, mode, theme } = JSON.parse(event.body || '{}');
     if (!profileData) {
       return { statusCode: 400, headers: CORS, body: JSON.stringify({ error: 'profileData manquant' }) };
     }
@@ -21,31 +21,48 @@ exports.handler = async (event) => {
     let prompt;
 
     if (mode === 'brands') {
-      prompt = `Tu es un expert en influence marketing. Analyse en profondeur ce profil Instagram et génère 10 marques réelles à prospecter pour un partenariat payé.
+      const themeInstructions = {
+        all: `Génère 18 marques réparties en 3 catégories équilibrées : 6 grandes marques connues, 6 marques locales/culturelles, 6 événements/tourisme/restaurants.`,
+        big: `Génère 15 grandes marques connues internationalement qui font régulièrement des campagnes d'influence.`,
+        local: `Génère 15 marques locales, culturelles, restaurants, médias locaux, associations, marques artisanales qui correspondent à la culture et à l'origine du créateur.`,
+        events: `Génère 15 partenaires events & tourisme : offices du tourisme, festivals, événements culturels, hôtels, compagnies aériennes, musées, agences de voyage, destinations.`
+      };
+      const themeRule = themeInstructions[theme] || themeInstructions.all;
+
+      const catRule = theme === 'big'
+        ? `Toutes les marques ont "categorie": "grande_marque"`
+        : theme === 'local'
+        ? `Toutes les marques ont "categorie": "locale_culture"`
+        : theme === 'events'
+        ? `Toutes les marques ont "categorie": "event_tourisme"`
+        : `Répartis les marques avec le champ "categorie" : "grande_marque", "locale_culture", ou "event_tourisme"`;
+
+      prompt = `Tu es un expert en influence marketing. Analyse ce profil Instagram et génère des marques à prospecter pour un partenariat payé.
 
 DONNÉES DU PROFIL :
 - Handle : ${profileData.username}
 - Bio : ${profileData.bio || 'Non renseignée'}
 - Abonnés : ${profileData.followers || 'Inconnu'} (${profileData.tier || 'tier inconnu'})
-- Niche détectée : ${profileData.niche || 'Non détectée'}
-- Mots-clés bio : ${profileData.keywords || 'Aucun'}
-- Hashtags utilisés : ${profileData.hashtags || 'Aucun'}
-- Collabs détectées : ${profileData.collabs || 'Aucune'}
+- Niche : ${profileData.niche || 'Non détectée'}
+- Mots-clés : ${profileData.keywords || 'Aucun'}
+- Hashtags : ${profileData.hashtags || 'Aucun'}
+- Villes/pays détectés : ${profileData.locations || 'Aucun'}
+- Collabs passées : ${profileData.collabs || 'Aucune'}
 - Liens bio : ${profileData.links || 'Aucun'}
 - Autres comptes mentionnés : ${profileData.otherAccounts || 'Aucun'}
 
-ANALYSE : Utilise TOUS ces éléments (hashtags, bio, niche, collabs passées) pour comprendre l'univers du créateur et son audience. Propose des marques qui correspondent vraiment à ce contenu.
+MISSION : ${themeRule}
 
 RÈGLES ABSOLUES :
 1. JAMAIS de plateformes sociales (Meta, TikTok, Instagram, Snapchat, YouTube, Twitter, LinkedIn)
 2. JAMAIS de streaming (Netflix, Disney+, Spotify, Deezer, Prime Video)
-3. UNIQUEMENT des marques produits/services qui font de l'influence marketing : food, mode, beauté, sport, lifestyle, tech, boissons, gaming, cosmétiques, etc.
-4. Marques réelles : Nike, Adidas, McDonald's, Uber Eats, L'Oréal, Red Bull, H&M, Zara, Deliveroo, Foot Locker, Decathlon, Gymshark, Frichti, Vinted, Shein, etc.
-5. Mélange 5 grandes marques + 5 marques moyennes accessibles à ce niveau d'abonnés
-6. La raison doit être spécifique à CE créateur, pas générique
+3. Marques RÉELLES qui existent vraiment
+4. Pour "locale_culture" et "event_tourisme" : sois très précis — cite des vrais offices du tourisme (ex: "Office du Tourisme de Marrakech"), des vrais festivals (ex: "Mawazine Festival"), de vrais restaurants ou chaînes, de vrais médias culturels
+5. La raison doit être spécifique à CE créateur (mentionne ses hashtags, sa culture, ses villes)
+6. ${catRule}
 
 Réponds en JSON UNIQUEMENT, sans texte avant ni après, sans bloc de code :
-[{"nom": "Nike", "type": "Sport", "raison": "Raison spécifique à ce profil", "instagram": "@nike"}, ...]`;
+[{"nom": "Nike", "type": "Sport", "raison": "Raison précise liée au profil", "instagram": "@nike", "categorie": "grande_marque"}, ...]`;
     } else {
       prompt = `Tu es un expert en influence marketing. Analyse ce profil Instagram et donne une évaluation concise en français.
 

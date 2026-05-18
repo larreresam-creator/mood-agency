@@ -256,6 +256,23 @@ function scrapeStats() {
   return stats;
 }
 
+function scrapeLocations() {
+  const text = document.body.innerText || '';
+  const locations = new Set();
+  // Villes et pays courants dans le contenu francophone/Maghreb
+  const cityPatterns = [
+    /\b(Paris|Lyon|Marseille|Bordeaux|Toulouse|Lille|Nice|Nantes|Strasbourg|Montpellier)\b/gi,
+    /\b(Maroc|Morocco|Casablanca|Marrakech|Rabat|Fès|Agadir|Tanger|Essaouira)\b/gi,
+    /\b(Algérie|Tunisie|Dubai|Londres|London|Madrid|Barcelone|Milan|New York)\b/gi,
+    /\b(France|Belgique|Suisse|Canada|Québec)\b/gi,
+  ];
+  cityPatterns.forEach(re => {
+    const m = text.match(re);
+    if (m) m.forEach(loc => locations.add(loc));
+  });
+  return [...locations].slice(0, 8);
+}
+
 function scrapeHashtags() {
   const tags = new Set();
   const allText = document.body.innerText || '';
@@ -465,7 +482,13 @@ function buildPanelHTML(p, talents) {
       <div class="mood-divider"></div>
       <div class="mood-section">
         <div class="mood-section-title">🎯 Marques à prospecter</div>
-        <div style="font-size:11px;color:#888;margin-bottom:8px">L'IA génère 10 marques adaptées à ce profil</div>
+        <div style="font-size:11px;color:#888;margin-bottom:10px">L'IA génère 15-20 marques selon le thème choisi</div>
+        <div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:10px" id="mood-theme-btns">
+          <button class="mood-theme-btn active" data-theme="all">Tout</button>
+          <button class="mood-theme-btn" data-theme="big">Grandes marques</button>
+          <button class="mood-theme-btn" data-theme="local">Local & Culture</button>
+          <button class="mood-theme-btn" data-theme="events">Events & Tourisme</button>
+        </div>
         <button class="mood-btn mood-btn-violet" id="mood-brands-btn">Générer les marques</button>
         <div id="mood-brands-result" style="margin-top:10px;display:none"></div>
       </div>
@@ -634,6 +657,16 @@ function bindPanelEvents(profile, talents) {
     btn.disabled = false;
   };
 
+  // Sélecteur de thème
+  let selectedTheme = 'all';
+  document.querySelectorAll('#mood-panel .mood-theme-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('#mood-panel .mood-theme-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      selectedTheme = btn.getAttribute('data-theme');
+    });
+  });
+
   // Générer les marques (IA)
   document.getElementById('mood-brands-btn').onclick = async () => {
     const btn = document.getElementById('mood-brands-btn');
@@ -647,6 +680,7 @@ function bindPanelEvents(profile, talents) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           mode: 'brands',
+          theme: selectedTheme,
           profileData: {
             username: profile.handle,
             bio: profile.bio,
@@ -655,6 +689,7 @@ function bindPanelEvents(profile, talents) {
             niche: profile.niche,
             keywords: (profile.keywords || []).join(', '),
             hashtags: scrapeHashtags().join(' '),
+            locations: scrapeLocations().join(', '),
             collabs: (profile.collabs || []).join(', '),
             links: (profile.links || []).map(l => l.url).join(', '),
             otherAccounts: (profile.otherAccounts || []).join(', ')
@@ -665,34 +700,51 @@ function bindPanelEvents(profile, talents) {
       if (data.error) {
         result.innerHTML = `<span style="color:#ff6b6b">Erreur: ${data.error}</span>`;
       } else if (!data.brands || data.brands.length === 0) {
-        const debugInfo = data.debug_text
-          ? `<div style="color:#888;font-size:10px;margin-top:6px;word-break:break-all">Réponse IA: ${data.debug_text}</div>`
-          : `<div style="color:#888;font-size:10px;margin-top:4px;word-break:break-all">Raw API: ${data.debug_raw || 'rien'}</div>`;
-        const parseInfo = data.parse_error ? `<div style="color:#ff6b6b;font-size:10px;margin-top:4px">Parse error: ${data.parse_error}</div>` : '';
-        result.innerHTML = `<span style="color:#aaa">Aucune marque générée.</span>${debugInfo}${parseInfo}`;
+        result.innerHTML = `<span style="color:#aaa">Aucune marque générée.</span><div style="color:#888;font-size:10px;margin-top:4px;word-break:break-all">${data.debug_text || data.debug_raw || 'Pas de réponse'}</div>`;
       } else {
-        result.innerHTML = data.brands.map((b, i) => `
-          <div style="background:rgba(255,255,255,0.04);border-radius:8px;padding:10px 12px;margin-bottom:8px">
-            <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
-              <div style="flex:1">
-                <div style="font-weight:600;color:#fff;font-size:12px">${b.nom} <span style="color:#9b59f5;font-weight:400;font-size:11px">${b.instagram||''}</span></div>
-                <div style="color:#ff3fa4;font-size:11px;margin:2px 0">${b.type||''}</div>
-                <div style="color:#aaa;font-size:11px;line-height:1.4">${b.raison||''}</div>
-              </div>
-              <button class="mood-btn-add mood-brand-add-crm" data-nom="${b.nom}" data-instagram="${b.instagram||''}" data-type="${b.type||''}" style="flex-shrink:0;margin-top:2px">+CRM</button>
-            </div>
-          </div>`).join('');
+        // Grouper par catégorie
+        const catLabels = { grande_marque: '🏢 Grandes marques', locale_culture: '🌍 Local & Culture', event_tourisme: '🎪 Events & Tourisme', autre: '📌 Autres' };
+        const catColors = { grande_marque: '#ff3fa4', locale_culture: '#3cdc78', event_tourisme: '#f5a623', autre: '#9b59f5' };
+        const grouped = {};
+        data.brands.forEach(b => {
+          const cat = b.categorie || 'autre';
+          if (!grouped[cat]) grouped[cat] = [];
+          grouped[cat].push(b);
+        });
+
+        let html = '';
+        const catOrder = ['grande_marque', 'locale_culture', 'event_tourisme', 'autre'];
+        catOrder.forEach(cat => {
+          if (!grouped[cat] || grouped[cat].length === 0) return;
+          html += `<div style="color:${catColors[cat]};font-size:11px;font-weight:600;margin:10px 0 6px;letter-spacing:0.5px">${catLabels[cat]}</div>`;
+          grouped[cat].forEach(b => {
+            html += `
+              <div style="background:rgba(255,255,255,0.04);border-radius:8px;padding:9px 11px;margin-bottom:6px">
+                <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
+                  <div style="flex:1">
+                    <div style="font-weight:600;color:#fff;font-size:12px">${b.nom} <span style="color:#9b59f5;font-weight:400;font-size:11px">${b.instagram||''}</span></div>
+                    <div style="color:${catColors[cat]};font-size:10px;margin:2px 0">${b.type||''}</div>
+                    <div style="color:#aaa;font-size:11px;line-height:1.4">${b.raison||''}</div>
+                  </div>
+                  <button class="mood-btn-add mood-brand-add-crm" data-nom="${b.nom}" data-instagram="${b.instagram||''}" data-type="${b.type||''}" data-cat="${cat}" style="flex-shrink:0;margin-top:2px">+CRM</button>
+                </div>
+              </div>`;
+          });
+        });
+        result.innerHTML = html;
+
         result.querySelectorAll('.mood-brand-add-crm').forEach(addBtn => {
           addBtn.addEventListener('click', async () => {
             const nom = addBtn.getAttribute('data-nom');
             const insta = addBtn.getAttribute('data-instagram');
             const type = addBtn.getAttribute('data-type');
+            const cat = addBtn.getAttribute('data-cat');
             const crm = await fbGet('crm') || [];
             crm.push({
               id: Date.now(), nom, type: 'marque', canal: 'Email',
               statut: 'new', pourQui: '', date: new Date().toISOString().slice(0,10),
               action: 'Contacter pour partenariat',
-              notes: `Marque suggérée par IA pour ${profile.handle} | Catégorie: ${type} | Instagram: ${insta}`
+              notes: `Suggéré par IA pour ${profile.handle} | ${catLabels[cat]||cat} | ${type} | ${insta}`
             });
             await fbSet('crm', crm);
             addBtn.textContent = '✓';
