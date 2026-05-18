@@ -74,9 +74,10 @@ Donne :
     }
 
     const data = await response.json();
+    const debugRaw = JSON.stringify(data).slice(0, 600);
 
     if (data.error) {
-      return { statusCode: 200, headers: CORS, body: JSON.stringify({ brands: [], error: data.error.message || JSON.stringify(data.error) }) };
+      return { statusCode: 200, headers: CORS, body: JSON.stringify({ brands: [], error: data.error.message || JSON.stringify(data.error), debug_raw: debugRaw }) };
     }
 
     const text = data.content?.[0]?.text || '';
@@ -91,7 +92,7 @@ Donne :
       } catch(e) {
         parseError = e.message;
       }
-      return { statusCode: 200, headers: CORS, body: JSON.stringify({ brands, debug_text: text.slice(0, 400), parse_error: parseError }) };
+      return { statusCode: 200, headers: CORS, body: JSON.stringify({ brands, debug_text: text ? text.slice(0, 400) : null, debug_raw: debugRaw, parse_error: parseError }) };
     }
 
     return { statusCode: 200, headers: CORS, body: JSON.stringify({ analysis: text || 'Analyse indisponible' }) };

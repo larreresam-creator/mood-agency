@@ -647,7 +647,9 @@ function bindPanelEvents(profile, talents) {
       if (data.error) {
         result.innerHTML = `<span style="color:#ff6b6b">Erreur: ${data.error}</span>`;
       } else if (!data.brands || data.brands.length === 0) {
-        const debugInfo = data.debug_text ? `<div style="color:#888;font-size:10px;margin-top:6px;word-break:break-all">Réponse IA: ${data.debug_text}</div>` : '<div style="color:#888;font-size:10px;margin-top:4px">Pas de réponse reçue</div>';
+        const debugInfo = data.debug_text
+          ? `<div style="color:#888;font-size:10px;margin-top:6px;word-break:break-all">Réponse IA: ${data.debug_text}</div>`
+          : `<div style="color:#888;font-size:10px;margin-top:4px;word-break:break-all">Raw API: ${data.debug_raw || 'rien'}</div>`;
         const parseInfo = data.parse_error ? `<div style="color:#ff6b6b;font-size:10px;margin-top:4px">Parse error: ${data.parse_error}</div>` : '';
         result.innerHTML = `<span style="color:#aaa">Aucune marque générée.</span>${debugInfo}${parseInfo}`;
       } else {
