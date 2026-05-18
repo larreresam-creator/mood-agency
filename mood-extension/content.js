@@ -366,7 +366,7 @@ function buildPanelHTML(p, talents) {
       <button class="mood-tab active" onclick="moodSwitchTab('crm',this)">CRM</button>
       <button class="mood-tab" onclick="moodSwitchTab('similaires',this)">Similaires</button>
       <button class="mood-tab" onclick="moodSwitchTab('collabs',this)">Collabs</button>
-      
+      <button class="mood-tab" onclick="moodSwitchTab('ia',this)">✨ IA</button>
     </div>
 
     <!-- TAB CRM -->
@@ -425,6 +425,15 @@ function buildPanelHTML(p, talents) {
           <button class="mood-btn-add" id="mood-manual-add">+</button>
         </div>
         <button class="mood-btn mood-btn-save" id="mood-save-collabs" style="margin-top:8px">💾 Sauvegarder</button>
+      </div>
+    </div>
+
+    <!-- TAB IA -->
+    <div id="mood-tab-ia" class="mood-tab-content" style="display:none">
+      <div class="mood-section">
+        <div class="mood-section-title">✨ Analyse IA du profil</div>
+        <button class="mood-btn mood-btn-pink" id="mood-analyze-btn">Analyser avec l'IA</button>
+        <div id="mood-ia-result" style="margin-top:12px;font-size:12px;line-height:1.6;color:#e0e0e0;white-space:pre-wrap;display:none"></div>
       </div>
     </div>
 
@@ -494,6 +503,37 @@ function bindPanelEvents(profile, talents) {
     crm.push(row);
     await fbSet('crm', crm);
     showToast('✓ Ajouté au CRM !');
+  };
+
+  // Analyse IA
+  document.getElementById('mood-analyze-btn').onclick = async () => {
+    const btn = document.getElementById('mood-analyze-btn');
+    const result = document.getElementById('mood-ia-result');
+    btn.textContent = '⏳ Analyse en cours...';
+    btn.disabled = true;
+    result.style.display = 'none';
+    try {
+      const r = await fetch('https://mood-agency-crm.netlify.app/.netlify/functions/analyze', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ profileData: {
+          username: profile.handle,
+          bio: profile.bio,
+          followers: profile.abos,
+          following: '',
+          posts: profile.stats?.posts,
+          links: profile.links
+        }})
+      });
+      const data = await r.json();
+      result.textContent = data.analysis || 'Analyse indisponible';
+      result.style.display = 'block';
+    } catch(e) {
+      result.textContent = 'Erreur lors de l\'analyse. Réessaie.';
+      result.style.display = 'block';
+    }
+    btn.textContent = 'Analyser avec l\'IA';
+    btn.disabled = false;
   };
 
   // Add to Veille
