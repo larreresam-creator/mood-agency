@@ -36,15 +36,25 @@ exports.handler = async (event) => {
 
   const items = await apifyRes.json();
 
-  // Filtrer les posts sponsorisés
-  const sponsoredKw = ['#ad', '#sponsored', '#partenariat', '#collab', '#partnership', '#gifted', '#pub', 'paid partnership', 'collaboration payée', 'partenariat rémunéré'];
+  // Filtrer les posts sponsorisés — keywords français + anglais élargis
+  const sponsoredKw = [
+    '#ad', '#sponsored', '#partenariat', '#collab', '#partnership', '#gifted', '#pub',
+    'paid partnership', 'collaboration payée', 'partenariat rémunéré',
+    'en collaboration avec', 'en partenariat avec', 'merci à', 'merci @',
+    'thanks to', 'avec @', 'avec la marque', 'offert par', 'offert par @',
+    'code promo', 'code:', 'lien en bio', 'disponible sur', '#publicité',
+    '#communication', '#brandambassador', '#ambassador', '#ambassadeur',
+    'notre partenaire', 'notre partenariat', 'je travaille avec'
+  ];
   const collabBrands = new Set();
 
   (items || []).forEach(item => {
     const posts = item.latestPosts || item.posts || [];
     posts.forEach(post => {
       const caption = (post.caption || post.text || '').toLowerCase();
-      if (sponsoredKw.some(k => caption.includes(k))) {
+      const hasSponsoredKw = sponsoredKw.some(k => caption.includes(k));
+      const hasCodePromo = /code[:\s]+\w+/i.test(caption);
+      if (hasSponsoredKw || hasCodePromo) {
         const mentions = caption.match(/@[\w.]+/g);
         if (mentions) mentions.forEach(m => {
           if (m.replace('@', '').toLowerCase() !== handle.toLowerCase()) collabBrands.add(m);
