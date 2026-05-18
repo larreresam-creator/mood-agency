@@ -256,6 +256,18 @@ function scrapeStats() {
   return stats;
 }
 
+function scrapeHashtags() {
+  const tags = new Set();
+  const allText = document.body.innerText || '';
+  const matches = allText.match(/#[\wÀ-ÿ]+/g) || [];
+  const skip = ['#ad','#sponsored','#partenariat','#collab','#partnership','#gifted','#pub','#publicité','#communication'];
+  matches.forEach(t => {
+    const tl = t.toLowerCase();
+    if (!skip.includes(tl) && t.length > 2 && t.length < 30) tags.add(t.toLowerCase());
+  });
+  return [...tags].slice(0, 20);
+}
+
 function scanCollabs(currentHandle) {
   const kw = ['#ad','#sponsored','#partenariat','#collab','#partnership','#gifted','#pub','paid partnership','collaboration payée','partenariat rémunéré'];
   const brands = new Set();
@@ -639,7 +651,13 @@ function bindPanelEvents(profile, talents) {
             username: profile.handle,
             bio: profile.bio,
             followers: profile.abos,
-            niche: profile.niche
+            tier: profile.tier,
+            niche: profile.niche,
+            keywords: (profile.keywords || []).join(', '),
+            hashtags: scrapeHashtags().join(' '),
+            collabs: (profile.collabs || []).join(', '),
+            links: (profile.links || []).map(l => l.url).join(', '),
+            otherAccounts: (profile.otherAccounts || []).join(', ')
           }
         })
       });
