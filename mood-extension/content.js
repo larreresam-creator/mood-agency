@@ -76,6 +76,18 @@ function getProfileUrl(url) {
   if (['explore','direct','accounts','stories','p','reel','reels','tv'].includes(u)) return null;
   return 'https://www.instagram.com/' + u + '/';
 }
+function isProfileOrReelsPage() {
+  const path = window.location.pathname;
+  // Page principale du profil : /username/
+  const isMain = /^\/[^\/]+\/?$/.test(path) &&
+    !['/','/explore/','/direct/','/accounts/'].includes(path) &&
+    !path.startsWith('/p/') && !path.startsWith('/reel/') &&
+    !path.startsWith('/stories/') && !path.startsWith('/explore/') &&
+    !path.startsWith('/accounts/');
+  // Page reels du profil : /username/reels/
+  const isReels = /^\/[^\/]+\/reels\/?$/.test(path);
+  return isMain || isReels;
+}
 function isSubPage(url) {
   return lastProfileUrl && (url.includes('/p/') || url.includes('/reel/') || url.includes('/reels/') || url.includes('/stories/') || url.includes('/tv/'));
 }
@@ -88,7 +100,7 @@ function isProfilePage() {
     !path.startsWith('/explore/') && !path.startsWith('/accounts/');
 }
 function tryInject() {
-  if (!isProfilePage() || panelInjected) return;
+  if (!isProfileOrReelsPage() || panelInjected) return;
   const header = document.querySelector('header') || document.querySelector('main');
   if (!header) { setTimeout(tryInject, 1000); return; }
   panelInjected = true;
