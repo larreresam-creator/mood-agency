@@ -114,7 +114,8 @@ function removePanel() {
 // ── SCRAPE PROFILE ────────────────────────────────────
 function scrapeProfile() {
   const data = {};
-  data.handle = '@' + window.location.pathname.replace(/\//g, '');
+  const pathParts = window.location.pathname.replace(/^\/|\/$/g, '').split('/');
+  data.handle = '@' + pathParts[0];
 
   // Nom
   const nameEl = document.querySelector('h2') || document.querySelector('h1');
