@@ -35,27 +35,13 @@ exports.handler = async (event) => {
   }
 
   const rawText = await apifyRes.text();
-  let items = [];
-  try { items = JSON.parse(rawText); } catch(e) {}
 
-  // Debug : voir la structure brute
-  const isArray = Array.isArray(items);
-  const firstItem = isArray ? items[0] : items;
-  const debugInfo = {
-    isArray,
-    itemCount: isArray ? items.length : 'not array',
-    rawPreview: rawText.slice(0, 300),
-    firstItemKeys: firstItem ? Object.keys(firstItem) : [],
-    postsCount: firstItem?.latestPosts?.length || firstItem?.posts?.length || 0,
-    firstPostKeys: firstItem?.latestPosts?.[0] ? Object.keys(firstItem.latestPosts[0]) : []
+  // Retourner la réponse brute pour debug
+  return {
+    statusCode: 200,
+    headers: CORS,
+    body: JSON.stringify({ debug_raw: rawText.slice(0, 500) })
   };
-
-  // Normaliser : si la réponse n'est pas un array, essayer d'extraire les items
-  if (!isArray) {
-    if (items?.items) items = items.items;
-    else if (items?.data) items = Array.isArray(items.data) ? items.data : [items.data];
-    else items = [items];
-  }
 
   // Filtrer les posts sponsorisés — keywords français + anglais élargis
   const sponsoredKw = [

@@ -548,9 +548,10 @@ function bindPanelEvents(profile, talents) {
       const data = await r.json();
       if (data.error) {
         result.innerHTML = `<span style="color:#ff6b6b">Erreur: ${data.error}</span>`;
+      } else if (data.debug_raw !== undefined) {
+        result.innerHTML = `<span style="color:#aaa;font-size:10px;word-break:break-all">RAW: ${data.debug_raw}</span>`;
       } else if (data.collabBrands?.length === 0) {
-        const d = data.debug || {};
-        result.innerHTML = `<span style="color:#aaa">Aucune collab détectée.</span><br><span style="color:#555;font-size:10px">Debug: ${d.itemCount} profil(s), ${d.postsCount} posts, clés: ${(d.firstItemKeys||[]).join(', ')}, postClés: ${(d.firstPostKeys||[]).join(', ')}</span>`;
+        result.innerHTML = `<span style="color:#aaa">Aucune collab détectée.</span>`;
       } else {
         let html = `<div style="color:#ff3fa4;font-weight:600;margin-bottom:8px">✓ ${data.collabBrands.length} marque(s) détectée(s)</div>`;
         html += data.collabBrands.map(b => `<span class="mood-tag">${b}</span>`).join('');
