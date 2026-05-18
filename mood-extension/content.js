@@ -363,10 +363,10 @@ function buildPanelHTML(p, talents) {
 
     <!-- ONGLETS -->
     <div class="mood-tabs">
-      <button class="mood-tab active" onclick="moodSwitchTab('crm',this)">CRM</button>
-      <button class="mood-tab" onclick="moodSwitchTab('similaires',this)">Similaires</button>
-      <button class="mood-tab" onclick="moodSwitchTab('collabs',this)">Collabs</button>
-      <button class="mood-tab" onclick="moodSwitchTab('ia',this)">✨ IA</button>
+      <button class="mood-tab active" data-tab="crm">CRM</button>
+      <button class="mood-tab" data-tab="similaires">Similaires</button>
+      <button class="mood-tab" data-tab="collabs">Collabs</button>
+      <button class="mood-tab" data-tab="ia">✨ IA</button>
     </div>
 
     <!-- TAB CRM -->
@@ -452,6 +452,18 @@ function moodSwitchTab(tab, btn) {
 
 // ── BIND EVENTS ───────────────────────────────────────
 function bindPanelEvents(profile, talents) {
+  // Tabs
+  document.querySelectorAll('#mood-panel .mood-tab').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const tab = btn.getAttribute('data-tab');
+      document.querySelectorAll('#mood-panel .mood-tab-content').forEach(t => t.style.display = 'none');
+      document.querySelectorAll('#mood-panel .mood-tab').forEach(b => b.classList.remove('active'));
+      const el = document.getElementById('mood-tab-' + tab);
+      if (el) el.style.display = 'block';
+      btn.classList.add('active');
+    });
+  });
+
   // Pin
   window._moodPinned = true;
   const pinBtn = document.getElementById('mood-pin');
