@@ -46,8 +46,26 @@ body{background:var(--bg);color:var(--white);font-family:'Space Grotesk',sans-se
 .btn-sm{height:30px;padding:0 12px;font-size:12px;}
 .btn-icon{display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;padding:0;border:1px solid var(--border);border-radius:7px;font-size:15px;background:var(--bg3);color:var(--muted);cursor:pointer;transition:all .15s;}
 .btn-icon:hover{background:var(--bg4);color:var(--white);border-color:var(--border2);}
-.btn-del{display:inline-flex;align-items:center;justify-content:center;gap:5px;height:32px;padding:0 10px;border:1px solid rgba(255,80,80,.25);border-radius:7px;font-size:12px;font-family:'Space Grotesk',sans-serif;font-weight:500;background:rgba(255,80,80,.07);color:#ff6060;cursor:pointer;transition:all .15s;white-space:nowrap;}
+.btn-del{display:inline-flex;align-items:center;justify-content:center;gap:5px;height:28px;padding:0 8px;border:1px solid rgba(255,80,80,.25);border-radius:7px;font-size:11px;font-family:'Space Grotesk',sans-serif;font-weight:500;background:rgba(255,80,80,.07);color:#ff6060;cursor:pointer;transition:all .15s;white-space:nowrap;}
 .btn-del:hover{background:rgba(255,80,80,.18);border-color:rgba(255,80,80,.5);color:#ff4040;}
+.btn-email{display:inline-flex;align-items:center;gap:4px;height:28px;padding:0 10px;border:1px solid rgba(155,89,245,.3);border-radius:7px;font-size:11px;font-family:'Space Grotesk',sans-serif;font-weight:500;background:rgba(155,89,245,.08);color:#9b59f5;cursor:pointer;transition:all .15s;white-space:nowrap;}
+.btn-email:hover{background:rgba(155,89,245,.2);border-color:rgba(155,89,245,.5);}
+.btn-email.loading{opacity:.6;pointer-events:none;}
+.email-card{background:var(--bg2);border:1px solid var(--border2);border-radius:12px;padding:20px 22px;margin-bottom:14px;}
+.email-card.approved{border-color:rgba(60,220,120,.3);}
+.email-card.sent{border-color:rgba(100,100,100,.3);opacity:.6;}
+.email-subject{font-weight:700;font-size:14px;color:var(--white);margin-bottom:6px;}
+.email-meta{font-size:11px;color:var(--muted);margin-bottom:14px;display:flex;gap:12px;flex-wrap:wrap;}
+.email-body{background:var(--bg3);border-radius:8px;padding:14px;font-size:12px;line-height:1.7;color:#d0d0d0;white-space:pre-wrap;min-height:80px;}
+.email-body[contenteditable=true]{border:1px solid rgba(155,89,245,.4);outline:none;}
+.email-actions{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap;}
+.btn-approve{height:32px;padding:0 14px;border:1px solid rgba(60,220,120,.35);border-radius:7px;font-size:12px;font-family:'Space Grotesk',sans-serif;background:rgba(60,220,120,.08);color:#3cdc78;cursor:pointer;transition:all .15s;}
+.btn-approve:hover{background:rgba(60,220,120,.2);}
+.btn-send{height:32px;padding:0 14px;border:none;border-radius:7px;font-size:12px;font-family:'Space Grotesk',sans-serif;background:linear-gradient(135deg,#ff3fa4,#9b59f5);color:#fff;cursor:pointer;font-weight:600;transition:all .15s;}
+.btn-send:hover{opacity:.85;}
+.badge-pending{background:rgba(245,166,35,.12);color:#f5a623;border:1px solid rgba(245,166,35,.3);padding:2px 8px;border-radius:99px;font-size:10px;font-weight:600;}
+.badge-approved{background:rgba(60,220,120,.12);color:#3cdc78;border:1px solid rgba(60,220,120,.3);padding:2px 8px;border-radius:99px;font-size:10px;font-weight:600;}
+.badge-sent{background:rgba(150,150,150,.1);color:#888;border:1px solid rgba(150,150,150,.2);padding:2px 8px;border-radius:99px;font-size:10px;font-weight:600;}
 .page-body{padding:24px 28px;flex:1;}
 .page{display:none;flex-direction:column;height:100%;}
 .page.active{display:flex;}
@@ -192,6 +210,10 @@ tbody tr:hover td{background:rgba(255,255,255,.02);}
       <button class="nav-btn" onclick="showPage('analytics',this)">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
         Analytics
+      </button>
+      <button class="nav-btn" onclick="showPage('emails',this)" id="nav-emails">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,12 2,6"/></svg>
+        📬 File d'attente <span id="email-badge" style="display:none;background:#ff3fa4;color:#fff;border-radius:99px;padding:1px 6px;font-size:10px;margin-left:4px">0</span>
       </button>
     </nav>
     <div class="sidebar-bottom">
@@ -350,6 +372,27 @@ tbody tr:hover td{background:rgba(255,255,255,.02);}
         </div>
       </div>
     </div>
+    <!-- FILE D'ATTENTE EMAILS -->
+    <div id="page-emails" class="page">
+      <div class="topbar">
+        <div class="page-title">📬 File d'attente emails</div>
+        <div class="topbar-actions">
+          <select id="email-filter-talent" onchange="renderEmails()" style="background:var(--bg3);border:1px solid var(--border2);color:var(--white);padding:6px 10px;border-radius:7px;font-size:12px;font-family:inherit">
+            <option value="">Tous les talents</option>
+          </select>
+          <select id="email-filter-statut" onchange="renderEmails()" style="background:var(--bg3);border:1px solid var(--border2);color:var(--white);padding:6px 10px;border-radius:7px;font-size:12px;font-family:inherit">
+            <option value="">Tous statuts</option>
+            <option value="pending">⏳ En attente</option>
+            <option value="approved">✅ Approuvé</option>
+            <option value="sent">✉️ Envoyé</option>
+          </select>
+        </div>
+      </div>
+      <div class="page-body">
+        <div class="stats-grid" id="email-stats"></div>
+        <div id="email-list" style="margin-top:16px"></div>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -399,20 +442,23 @@ const TALENT_COLORS_SOFT=[
 let crm=[],talents=[],veille=[],contacts=[];
 let sortKey=null,sortAsc=true,modalMode=null,editId=null,currentView='table',currentPeriod=7;
 let dailyChart=null;
+let emails=[];
 
 // ── STORAGE (Firebase) ────────────────────────────────
 async function load(){
   try{
-    const [c,t,v,co]=await Promise.all([
+    const [c,t,v,co,em]=await Promise.all([
       db.collection('data').doc('crm').get(),
       db.collection('data').doc('talents').get(),
       db.collection('data').doc('veille').get(),
-      db.collection('data').doc('contacts').get()
+      db.collection('data').doc('contacts').get(),
+      db.collection('data').doc('emails').get()
     ]);
     crm=c.exists?c.data().items:dCRM();
     talents=t.exists?t.data().items:dTalents();
     veille=v.exists?v.data().items:dVeille();
     contacts=co.exists?co.data().items:dContacts();
+    emails=em.exists?em.data().items:[];
   }catch(err){
     console.error('Firebase load error:',err);
     crm=dCRM();talents=dTalents();veille=dVeille();contacts=dContacts();
@@ -425,7 +471,8 @@ async function save(){
       db.collection('data').doc('crm').set({items:crm}),
       db.collection('data').doc('talents').set({items:talents}),
       db.collection('data').doc('veille').set({items:veille}),
-      db.collection('data').doc('contacts').set({items:contacts})
+      db.collection('data').doc('contacts').set({items:contacts}),
+      db.collection('data').doc('emails').set({items:emails})
     ]);
   }catch(err){console.error('Firebase save error:',err);}
   const t=document.getElementById('toast');t.style.display='block';setTimeout(()=>t.style.display='none',2000);
@@ -447,7 +494,133 @@ function dTalents(){return[
 function dVeille(){return[];}
 function dContacts(){return[];}
 
-function renderAll(){renderCRM();renderTalents();renderVeille();fillFilters();renderAnalytics();}
+function renderAll(){renderCRM();renderTalents();renderVeille();fillFilters();renderAnalytics();renderEmails();updateEmailBadge();}
+
+// ── EMAILS ────────────────────────────────────────────
+async function generateEmail(crmId){
+  const prospect=crm.find(r=>r.id===crmId);
+  if(!prospect){alert('Prospect introuvable');return;}
+  const talent=talents.find(t=>t.nom===prospect.pourQui)||{nom:prospect.pourQui||'Mood Agency',niche:'Créateur de contenu',plats:['Instagram']};
+  const btn=document.querySelector(`button[onclick="generateEmail(${crmId})"]`);
+  if(btn){btn.classList.add('loading');btn.textContent='⏳...';}
+  try{
+    const r=await fetch('https://mood-agency-crm.netlify.app/.netlify/functions/generate-email',{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({prospect,talent})
+    });
+    const data=await r.json();
+    if(data.error){alert('Erreur: '+data.error);return;}
+    const email={
+      id:Date.now(),prospectId:crmId,prospectNom:prospect.nom,
+      talent:prospect.pourQui||'—',
+      objet:data.email.objet,corps:data.email.corps,
+      statut:'pending',date:new Date().toISOString().slice(0,10)
+    };
+    emails.push(email);
+    await save();
+    updateEmailBadge();
+    // Aller sur la page emails
+    const navBtn=document.getElementById('nav-emails');
+    showPage('emails',navBtn);
+    renderEmails();
+  }catch(e){alert('Erreur réseau. Réessaie.');}
+  finally{if(btn){btn.classList.remove('loading');btn.textContent='✉️ Email';}}
+}
+
+function updateEmailBadge(){
+  const pending=emails.filter(e=>e.statut==='pending').length;
+  const badge=document.getElementById('email-badge');
+  if(!badge)return;
+  if(pending>0){badge.style.display='inline';badge.textContent=pending;}
+  else badge.style.display='none';
+}
+
+function renderEmails(){
+  const ft=document.getElementById('email-filter-talent')?.value||'';
+  const fs=document.getElementById('email-filter-statut')?.value||'';
+  // Remplir filtre talent
+  const sel=document.getElementById('email-filter-talent');
+  if(sel&&sel.options.length<=1){
+    [...new Set(emails.map(e=>e.talent).filter(Boolean))].forEach(t=>{
+      const o=document.createElement('option');o.value=t;o.textContent=t;sel.appendChild(o);
+    });
+  }
+  const list=emails.filter(e=>(!ft||e.talent===ft)&&(!fs||e.statut===fs))
+    .sort((a,b)=>b.id-a.id);
+  const pending=emails.filter(e=>e.statut==='pending').length;
+  const approved=emails.filter(e=>e.statut==='approved').length;
+  const sent=emails.filter(e=>e.statut==='sent').length;
+  document.getElementById('email-stats').innerHTML=`
+    <div class="stat"><div class="stat-label">Total</div><div class="stat-num">${emails.length}</div></div>
+    <div class="stat"><div class="stat-label">En attente</div><div class="stat-num" style="color:#f5a623">${pending}</div></div>
+    <div class="stat"><div class="stat-label">Approuvés</div><div class="stat-num" style="color:#3cdc78">${approved}</div></div>
+    <div class="stat"><div class="stat-label">Envoyés</div><div class="stat-num violet">${sent}</div></div>`;
+  if(!list.length){
+    document.getElementById('email-list').innerHTML=`<div class="empty-state"><p>Aucun email — clique sur ✉️ Email dans le CRM pour en générer un</p></div>`;
+    return;
+  }
+  document.getElementById('email-list').innerHTML=list.map(em=>{
+    const col=em.talent?tColor(em.talent):'var(--muted)';
+    const badgeClass=em.statut==='pending'?'badge-pending':em.statut==='approved'?'badge-approved':'badge-sent';
+    const badgeLabel=em.statut==='pending'?'⏳ En attente':em.statut==='approved'?'✅ Approuvé':'✉️ Envoyé';
+    const approveBtn=em.statut==='pending'?`<button class="btn-approve" onclick="approveEmail(${em.id})">✅ Approuver</button>`:'';
+    const sendBtn=em.statut==='approved'?`<button class="btn-send" onclick="sendEmail(${em.id})">✉️ Envoyer maintenant</button>`:'';
+    const editBtn=em.statut!=='sent'?`<button class="btn-email" onclick="toggleEditEmail(${em.id})">✎ Modifier</button>`:'';
+    const delBtn=`<button class="btn-del" onclick="deleteEmail(${em.id})">🗑</button>`;
+    return`<div class="email-card ${em.statut}" id="email-card-${em.id}">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:8px">
+        <div class="email-subject">${e(em.objet)}</div>
+        <span class="${badgeClass}">${badgeLabel}</span>
+      </div>
+      <div class="email-meta">
+        <span style="color:${col};font-weight:600">${e(em.talent)}</span>
+        <span>→ ${e(em.prospectNom)}</span>
+        <span>${em.date}</span>
+      </div>
+      <div class="email-body" id="email-body-${em.id}">${e(em.corps)}</div>
+      <div class="email-actions">${approveBtn}${sendBtn}${editBtn}${delBtn}</div>
+    </div>`;
+  }).join('');
+}
+
+function toggleEditEmail(id){
+  const body=document.getElementById('email-body-'+id);
+  if(!body)return;
+  if(body.contentEditable==='true'){
+    body.contentEditable='false';
+    const em=emails.find(e=>e.id===id);
+    if(em){em.corps=body.innerText;save();}
+  } else {
+    body.contentEditable='true';
+    body.focus();
+  }
+}
+
+async function approveEmail(id){
+  const em=emails.find(e=>e.id===id);
+  if(!em)return;
+  em.statut='approved';
+  await save();
+  renderEmails();updateEmailBadge();
+}
+
+async function deleteEmail(id){
+  emails=emails.filter(e=>e.id!==id);
+  await save();
+  renderEmails();updateEmailBadge();
+}
+
+function sendEmail(id){
+  const em=emails.find(e=>e.id===id);
+  if(!em)return;
+  const subject=encodeURIComponent(em.objet);
+  const body=encodeURIComponent(em.corps);
+  window.open(`mailto:?subject=${subject}&body=${body}`,'_blank');
+  if(confirm('Email ouvert dans ta messagerie. Marquer comme envoyé ?')){
+    em.statut='sent';
+    save();renderEmails();updateEmailBadge();
+  }
+}
 
 // ── PAGE NAV ──────────────────────────────────────────
 function showPage(id,btn){
@@ -505,7 +678,8 @@ function renderCRM(){
       <td class="td-m td-ell" title="${e(r.notes||'')}">${e(r.notes)||'—'}</td>
       <td><div class="actions-cell">
         <button class="btn-icon" title="Modifier" onclick="editRow('crm',${r.id})">✎</button>
-        <button class="btn-del" onclick="delRow('crm',${r.id})">🗑 Supprimer</button>
+        <button class="btn-email" title="Générer email IA" onclick="generateEmail(${r.id})">✉️ Email</button>
+        <button class="btn-del" onclick="delRow('crm',${r.id})">🗑</button>
       </div></td>
     </tr>`;
   }).join(''):`<tr><td colspan="9"><div class="empty-state"><p>Aucun prospect — cliquez sur Ajouter</p></div></td></tr>`;
