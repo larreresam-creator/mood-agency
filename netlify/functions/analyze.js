@@ -47,7 +47,8 @@ DONNÉES DU PROFIL :
 - Mots-clés : ${profileData.keywords || 'Aucun'}
 - Hashtags : ${profileData.hashtags || 'Aucun'}
 - Villes/pays détectés : ${profileData.locations || 'Aucun'}
-- Collabs passées : ${profileData.collabs || 'Aucune'}
+- ⭐ Collaborations commerciales Instagram détectées : ${profileData.paidCollabs || 'Aucune'}
+- Autres collabs mentionnées : ${profileData.collabs || 'Aucune'}
 - Liens bio : ${profileData.links || 'Aucun'}
 - Autres comptes mentionnés : ${profileData.otherAccounts || 'Aucun'}
 

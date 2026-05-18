@@ -215,8 +215,12 @@ function scrapeProfile() {
   else if (abosNum > 0) data.tier = 'Nano (<10k)';
   else data.tier = '—';
 
-  // Collabs
-  data.collabs = scanCollabs(data.handle);
+  // Collabs (scan basique + paid partnerships Instagram)
+  const basicCollabs = scanCollabs(data.handle);
+  const paidCollabs = scrapePaidPartnerships(data.handle);
+  const allCollabs = [...new Set([...paidCollabs, ...basicCollabs])];
+  data.collabs = allCollabs;
+  data.paidCollabs = paidCollabs;
 
   // Stats 30 jours (ce qu'on peut lire)
   data.stats = scrapeStats();
@@ -254,6 +258,38 @@ function scrapeStats() {
   // Fréquence estimée (nb posts / 30j - approximation)
   stats.freq = '—';
   return stats;
+}
+
+function scrapePaidPartnerships(currentHandle) {
+  const markers = [
+    'collaboration commerciale', 'paid partnership', 'partenariat rémunéré',
+    'en partenariat payant', 'partnership', 'collab commerciale'
+  ];
+  const brands = new Set();
+  const handle = (currentHandle || '').toLowerCase().replace('@', '');
+
+  // Scanne tout le texte visible de la page
+  document.querySelectorAll('span, div, a, p, h1, h2, h3, li').forEach(el => {
+    const text = (el.innerText || el.textContent || '').trim();
+    if (text.length > 3 && text.length < 200) {
+      const textLow = text.toLowerCase();
+      if (markers.some(m => textLow.includes(m))) {
+        // Cherche @mentions dans cet élément et son parent
+        const search = [text, el.parentElement?.innerText || ''].join(' ');
+        const mentions = search.match(/@[\w.]+/g);
+        if (mentions) {
+          mentions.forEach(m => {
+            if (m.toLowerCase().replace('@','') !== handle) brands.add(m.toLowerCase());
+          });
+        }
+        // Parfois le nom de la marque est juste après "avec" ou "with"
+        const withMatch = textLow.match(/(?:avec|with|partenariat avec)\s+@?([\w.]+)/);
+        if (withMatch && withMatch[1] !== handle) brands.add('@' + withMatch[1]);
+      }
+    }
+  });
+
+  return [...brands].slice(0, 15);
 }
 
 function scrapeLocations() {
@@ -339,8 +375,17 @@ async function injectPanel() {
 function buildPanelHTML(p, talents) {
   const talentOpts = `<option value="">— Choisir —</option>` + talents.map(t=>`<option value="${t.nom}">${t.nom}</option>`).join('');
 
-  const collabHTML = (p.collabs||[]).length
-    ? p.collabs.map(c=>`<span class="mood-tag">${c}</span>`).join('')
+  const paidHTML = (p.paidCollabs||[]).length
+    ? `<div style="font-size:10px;color:#f5a623;font-weight:600;margin-bottom:5px">💰 Collaboration commerciale Instagram</div>` +
+      p.paidCollabs.map(c=>`<span class="mood-tag" style="border-color:rgba(245,166,35,0.4);color:#f5a623">${c}</span>`).join('')
+    : '';
+  const otherCollabs = (p.collabs||[]).filter(c => !(p.paidCollabs||[]).includes(c));
+  const otherHTML = otherCollabs.length
+    ? (paidHTML ? `<div style="font-size:10px;color:#888;margin:8px 0 4px">Autres mentions</div>` : '') +
+      otherCollabs.map(c=>`<span class="mood-tag">${c}</span>`).join('')
+    : '';
+  const collabHTML = (paidHTML || otherHTML)
+    ? paidHTML + otherHTML
     : '<span class="mood-muted">Aucune détectée automatiquement</span>';
 
   const similarHTML = (p.similarProfiles||[]).length
@@ -690,6 +735,7 @@ function bindPanelEvents(profile, talents) {
             keywords: (profile.keywords || []).join(', '),
             hashtags: scrapeHashtags().join(' '),
             locations: scrapeLocations().join(', '),
+            paidCollabs: (profile.paidCollabs || []).join(', '),
             collabs: (profile.collabs || []).join(', '),
             links: (profile.links || []).map(l => l.url).join(', '),
             otherAccounts: (profile.otherAccounts || []).join(', ')
