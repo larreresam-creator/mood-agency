@@ -95,7 +95,7 @@ Donne :
       return { statusCode: 200, headers: CORS, body: JSON.stringify({ brands, debug_text: text ? text.slice(0, 400) : null, debug_raw: debugRaw, parse_error: parseError }) };
     }
 
-    return { statusCode: 200, headers: CORS, body: JSON.stringify({ analysis: text || 'Analyse indisponible' }) };
+    return { statusCode: 200, headers: CORS, body: JSON.stringify({ analysis: text || 'Analyse indisponible', v: 2, mode_received: mode }) };
 
   } catch(e) {
     return { statusCode: 200, headers: CORS, body: JSON.stringify({ brands: [], error: 'Exception: ' + e.message }) };
