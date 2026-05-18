@@ -1,0 +1,50 @@
+exports.handler = async (event) => {
+  if (event.httpMethod !== 'POST') {
+    return { statusCode: 405, body: 'Method Not Allowed' };
+  }
+
+  const { profileData } = JSON.parse(event.body || '{}');
+  if (!profileData) {
+    return { statusCode: 400, body: JSON.stringify({ error: 'profileData manquant' }) };
+  }
+
+  const response = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': process.env.ANTHROPIC_API_KEY,
+      'anthropic-version': '2023-06-01'
+    },
+    body: JSON.stringify({
+      model: 'claude-haiku-4-5-20251001',
+      max_tokens: 1024,
+      messages: [{
+        role: 'user',
+        content: `Tu es un expert en influence marketing. Analyse ce profil Instagram et donne une évaluation concise en français.
+
+Profil : ${profileData.username}
+Bio : ${profileData.bio || 'Non renseignée'}
+Abonnés : ${profileData.followers || 'Inconnu'}
+Abonnements : ${profileData.following || 'Inconnu'}
+Posts : ${profileData.posts || 'Inconnu'}
+Liens : ${(profileData.links || []).map(l => l.url).join(', ') || 'Aucun'}
+
+Donne :
+1. **Niche** : la catégorie principale du créateur (2-3 mots)
+2. **Tier** : Nano / Micro / Mid / Macro / Mega
+3. **Score de collaboration** : /10 (potentiel pour des partenariats marques)
+4. **Analyse** : 2-3 phrases sur le profil, son audience et son potentiel commercial
+5. **Marques idéales** : 3 types de marques qui correspondraient bien`
+      }]
+    })
+  });
+
+  const data = await response.json();
+  const text = data.content?.[0]?.text || 'Analyse indisponible';
+
+  return {
+    statusCode: 200,
+    headers: { 'Access-Control-Allow-Origin': '*' },
+    body: JSON.stringify({ analysis: text })
+  };
+};
