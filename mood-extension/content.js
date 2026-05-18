@@ -450,6 +450,13 @@ function buildPanelHTML(p, talents) {
         <button class="mood-btn mood-btn-pink" id="mood-analyze-btn">Analyser avec l'IA</button>
         <div id="mood-ia-result" style="margin-top:12px;font-size:12px;line-height:1.6;color:#e0e0e0;white-space:pre-wrap;display:none"></div>
       </div>
+      <div class="mood-divider"></div>
+      <div class="mood-section">
+        <div class="mood-section-title">🎯 Marques à prospecter</div>
+        <div style="font-size:11px;color:#888;margin-bottom:8px">L'IA génère 10 marques adaptées à ce profil</div>
+        <button class="mood-btn mood-btn-violet" id="mood-brands-btn">Générer les marques</button>
+        <div id="mood-brands-result" style="margin-top:10px;display:none"></div>
+      </div>
     </div>
 
         <div id="mood-toast" class="mood-toast" style="display:none"></div>
@@ -612,6 +619,72 @@ function bindPanelEvents(profile, talents) {
       result.style.display = 'block';
     }
     btn.textContent = 'Analyser avec l\'IA';
+    btn.disabled = false;
+  };
+
+  // Générer les marques (IA)
+  document.getElementById('mood-brands-btn').onclick = async () => {
+    const btn = document.getElementById('mood-brands-btn');
+    const result = document.getElementById('mood-brands-result');
+    btn.textContent = '⏳ Génération en cours...';
+    btn.disabled = true;
+    result.style.display = 'none';
+    try {
+      const r = await fetch('https://mood-agency-crm.netlify.app/.netlify/functions/analyze', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          mode: 'brands',
+          profileData: {
+            username: profile.handle,
+            bio: profile.bio,
+            followers: profile.abos,
+            niche: profile.niche
+          }
+        })
+      });
+      const data = await r.json();
+      if (!data.brands || data.brands.length === 0) {
+        result.innerHTML = '<span style="color:#aaa">Aucune marque générée. Réessaie.</span>';
+      } else {
+        result.innerHTML = data.brands.map((b, i) => `
+          <div style="background:rgba(255,255,255,0.04);border-radius:8px;padding:10px 12px;margin-bottom:8px">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
+              <div style="flex:1">
+                <div style="font-weight:600;color:#fff;font-size:12px">${b.nom} <span style="color:#9b59f5;font-weight:400;font-size:11px">${b.instagram||''}</span></div>
+                <div style="color:#ff3fa4;font-size:11px;margin:2px 0">${b.type||''}</div>
+                <div style="color:#aaa;font-size:11px;line-height:1.4">${b.raison||''}</div>
+              </div>
+              <button class="mood-btn-add mood-brand-add-crm" data-nom="${b.nom}" data-instagram="${b.instagram||''}" data-type="${b.type||''}" style="flex-shrink:0;margin-top:2px">+CRM</button>
+            </div>
+          </div>`).join('');
+        result.querySelectorAll('.mood-brand-add-crm').forEach(addBtn => {
+          addBtn.addEventListener('click', async () => {
+            const nom = addBtn.getAttribute('data-nom');
+            const insta = addBtn.getAttribute('data-instagram');
+            const type = addBtn.getAttribute('data-type');
+            const crm = await fbGet('crm') || [];
+            crm.push({
+              id: Date.now(), nom, type: 'marque', canal: 'Email',
+              statut: 'new', pourQui: '', date: new Date().toISOString().slice(0,10),
+              action: 'Contacter pour partenariat',
+              notes: `Marque suggérée par IA pour ${profile.handle} | Catégorie: ${type} | Instagram: ${insta}`
+            });
+            await fbSet('crm', crm);
+            addBtn.textContent = '✓';
+            addBtn.style.background = 'rgba(61,220,132,0.15)';
+            addBtn.style.color = '#3cdc78';
+            addBtn.disabled = true;
+            showToast(`✓ ${nom} ajouté au CRM !`);
+          });
+        });
+      }
+      result.style.display = 'block';
+    } catch(e) {
+      result.innerHTML = '<span style="color:#ff6b6b">Erreur réseau. Réessaie.</span>';
+      result.style.display = 'block';
+    }
+    btn.textContent = 'Générer les marques';
     btn.disabled = false;
   };
 
