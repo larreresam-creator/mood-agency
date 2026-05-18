@@ -34,16 +34,28 @@ exports.handler = async (event) => {
     return { statusCode: 500, headers: CORS, body: JSON.stringify({ error: `Apify error: ${errText.slice(0,200)}` }) };
   }
 
-  const items = await apifyRes.json();
+  const rawText = await apifyRes.text();
+  let items = [];
+  try { items = JSON.parse(rawText); } catch(e) {}
 
-  // Debug : voir la structure des données
+  // Debug : voir la structure brute
+  const isArray = Array.isArray(items);
+  const firstItem = isArray ? items[0] : items;
   const debugInfo = {
-    itemCount: items.length,
-    firstItemKeys: items[0] ? Object.keys(items[0]) : [],
-    firstPostKeys: items[0]?.latestPosts?.[0] ? Object.keys(items[0].latestPosts[0]) : (items[0]?.posts?.[0] ? Object.keys(items[0].posts[0]) : []),
-    firstCaption: items[0]?.latestPosts?.[0]?.caption || items[0]?.latestPosts?.[0]?.text || items[0]?.posts?.[0]?.caption || 'not found',
-    postsCount: items[0]?.latestPosts?.length || items[0]?.posts?.length || 0
+    isArray,
+    itemCount: isArray ? items.length : 'not array',
+    rawPreview: rawText.slice(0, 300),
+    firstItemKeys: firstItem ? Object.keys(firstItem) : [],
+    postsCount: firstItem?.latestPosts?.length || firstItem?.posts?.length || 0,
+    firstPostKeys: firstItem?.latestPosts?.[0] ? Object.keys(firstItem.latestPosts[0]) : []
   };
+
+  // Normaliser : si la réponse n'est pas un array, essayer d'extraire les items
+  if (!isArray) {
+    if (items?.items) items = items.items;
+    else if (items?.data) items = Array.isArray(items.data) ? items.data : [items.data];
+    else items = [items];
+  }
 
   // Filtrer les posts sponsorisés — keywords français + anglais élargis
   const sponsoredKw = [
