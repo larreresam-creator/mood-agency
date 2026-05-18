@@ -36,6 +36,15 @@ exports.handler = async (event) => {
 
   const items = await apifyRes.json();
 
+  // Debug : voir la structure des données
+  const debugInfo = {
+    itemCount: items.length,
+    firstItemKeys: items[0] ? Object.keys(items[0]) : [],
+    firstPostKeys: items[0]?.latestPosts?.[0] ? Object.keys(items[0].latestPosts[0]) : (items[0]?.posts?.[0] ? Object.keys(items[0].posts[0]) : []),
+    firstCaption: items[0]?.latestPosts?.[0]?.caption || items[0]?.latestPosts?.[0]?.text || items[0]?.posts?.[0]?.caption || 'not found',
+    postsCount: items[0]?.latestPosts?.length || items[0]?.posts?.length || 0
+  };
+
   // Filtrer les posts sponsorisés — keywords français + anglais élargis
   const sponsoredKw = [
     '#ad', '#sponsored', '#partenariat', '#collab', '#partnership', '#gifted', '#pub',
@@ -70,7 +79,7 @@ exports.handler = async (event) => {
     return {
       statusCode: 200,
       headers: CORS,
-      body: JSON.stringify({ handle, collabBrands: [], competitors: [], profileFound: items.length > 0 })
+      body: JSON.stringify({ handle, collabBrands: [], competitors: [], profileFound: items.length > 0, debug: debugInfo })
     };
   }
 

@@ -548,7 +548,8 @@ function bindPanelEvents(profile, talents) {
       if (data.error) {
         result.innerHTML = `<span style="color:#ff6b6b">Erreur: ${data.error}</span>`;
       } else if (data.collabBrands?.length === 0) {
-        result.innerHTML = '<span style="color:#aaa">Aucune collab sponsorisée détectée dans les 50 derniers posts.</span>';
+        const d = data.debug || {};
+        result.innerHTML = `<span style="color:#aaa">Aucune collab détectée.</span><br><span style="color:#555;font-size:10px">Debug: ${d.itemCount} profil(s), ${d.postsCount} posts, clés: ${(d.firstItemKeys||[]).join(', ')}, postClés: ${(d.firstPostKeys||[]).join(', ')}</span>`;
       } else {
         let html = `<div style="color:#ff3fa4;font-weight:600;margin-bottom:8px">✓ ${data.collabBrands.length} marque(s) détectée(s)</div>`;
         html += data.collabBrands.map(b => `<span class="mood-tag">${b}</span>`).join('');
