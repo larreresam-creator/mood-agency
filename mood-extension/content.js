@@ -645,7 +645,7 @@ function bindPanelEvents(profile, talents) {
       });
       const data = await r.json();
       if (!data.brands || data.brands.length === 0) {
-        result.innerHTML = '<span style="color:#aaa">Aucune marque générée. Réessaie.</span>';
+        result.innerHTML = `<span style="color:#aaa">Aucune marque générée.</span>${data.debug_text ? `<div style="color:#555;font-size:10px;margin-top:6px;word-break:break-all">${data.debug_text}</div>` : ''}`;
       } else {
         result.innerHTML = data.brands.map((b, i) => `
           <div style="background:rgba(255,255,255,0.04);border-radius:8px;padding:10px 12px;margin-bottom:8px">

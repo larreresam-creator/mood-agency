@@ -75,7 +75,7 @@ Donne :
       const jsonMatch = text.match(/\[[\s\S]*\]/);
       brands = jsonMatch ? JSON.parse(jsonMatch[0]) : [];
     } catch(e) { brands = []; }
-    return { statusCode: 200, headers: CORS, body: JSON.stringify({ brands }) };
+    return { statusCode: 200, headers: CORS, body: JSON.stringify({ brands, debug_text: text.slice(0, 300) }) };
   }
 
   return { statusCode: 200, headers: CORS, body: JSON.stringify({ analysis: text }) };
