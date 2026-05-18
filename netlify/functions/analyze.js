@@ -20,20 +20,21 @@ exports.handler = async (event) => {
   let prompt;
 
   if (mode === 'brands') {
-    prompt = `Tu es un expert en influence marketing. En te basant sur ce profil Instagram, génère une liste de 10 marques concrètes à prospecter pour un partenariat.
+    prompt = `Tu es un expert en influence marketing. En te basant sur ce profil Instagram, donne une liste de 10 VRAIES marques existantes à prospecter pour un partenariat d'influence.
 
 Profil : ${profileData.username}
 Bio : ${profileData.bio || 'Non renseignée'}
 Abonnés : ${profileData.followers || 'Inconnu'}
 Niche : ${profileData.niche || 'Non détectée'}
 
-Règles :
-- Propose des vraies marques qui font de l'influence marketing
-- Mélange grandes marques et marques moyennes accessibles
-- Adapte au profil et à son audience
-- Pour chaque marque, indique pourquoi elle correspond
+RÈGLES STRICTES :
+- Donne UNIQUEMENT de vraies marques qui existent (ex: Nike, Adidas, Coca-Cola, L'Oréal, Samsung, Spotify, Uber Eats...)
+- JAMAIS de catégories génériques comme "Startups tech" ou "Marques locales" — uniquement des noms de marques réels
+- Mélange grandes marques (Nike, Samsung...) et marques moyennes (Gymshark, Frichti...)
+- Adapte au profil, à son audience et à sa niche
+- Pour chaque marque, explique en 1 phrase pourquoi elle correspond à CE créateur précisément
 
-Réponds en JSON uniquement, format :
+Réponds en JSON UNIQUEMENT, sans texte avant ni après, format exact :
 [{"nom": "Nike", "type": "Sport", "raison": "Correspond au lifestyle sportif du créateur", "instagram": "@nike"}, ...]`;
   } else {
     prompt = `Tu es un expert en influence marketing. Analyse ce profil Instagram et donne une évaluation concise en français.
